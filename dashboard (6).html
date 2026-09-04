@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Spectral Calibration Console</title>
+<style>
+  :root{
+    --bg:#0B0F14;
+    --panel:#11161D;
+    --panel-line:#1E2530;
+    --text:#DCE3EA;
+    --text-dim:#7C8896;
+    --cyan:#4FD1E8;
+    --amber:#F2B84B;
+    --red:#EF6461;
+    --green:#5FD68A;
+    --mono: 'IBM Plex Mono', 'Courier New', monospace;
+    --sans: 'Inter', -apple-system, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--text);
+    font-family:var(--sans); padding:28px 36px 60px;
+    background-image:
+      radial-gradient(circle at 15% 0%, rgba(79,209,232,0.06), transparent 45%),
+      radial-gradient(circle at 85% 20%, rgba(242,184,75,0.05), transparent 40%);
+  }
+  header{
+    display:flex; justify-content:space-between; align-items:flex-end;
+    border-bottom:1px solid var(--panel-line); padding-bottom:18px; margin-bottom:28px;
+  }
+  h1{
+    font-size:22px; font-weight:600; margin:0; letter-spacing:0.2px;
+  }
+  h1 span{color:var(--cyan); font-family:var(--mono); font-weight:400;}
+  .subtitle{color:var(--text-dim); font-size:13px; margin-top:6px; font-family:var(--mono);}
+  .liveflag{
+    display:flex; align-items:center; gap:8px; font-family:var(--mono); font-size:12px; color:var(--text-dim);
+  }
+  .dot{width:7px;height:7px;border-radius:50%;background:var(--green); box-shadow:0 0 8px var(--green); animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:0.35;}}
+
+  .grid{display:grid; grid-template-columns: 1.3fr 1fr; gap:20px; margin-bottom:20px;}
+  .kpis{display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px;}
+  .card{
+    background:var(--panel); border:1px solid var(--panel-line); border-radius:10px;
+    padding:18px 20px;
+  }
+  .kpi-label{font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); margin-bottom:10px; font-family:var(--mono);}
+  .kpi-value{font-size:28px; font-weight:600; font-family:var(--mono);}
+  .kpi-sub{font-size:12px; color:var(--text-dim); margin-top:4px;}
+  .up{color:var(--red);} .down{color:var(--green);}
+
+  .panel-title{
+    font-size:13px; font-weight:600; letter-spacing:0.03em; margin-bottom:4px;
+  }
+  .panel-desc{font-size:12px; color:var(--text-dim); margin-bottom:16px; line-height:1.5;}
+
+  #semicircleCanvas{width:100%; display:block;}
+  .legend{display:flex; gap:20px; margin-top:10px; font-size:11px; color:var(--text-dim); font-family:var(--mono);}
+  .legend-item{display:flex; align-items:center; gap:6px;}
+  .swatch{width:10px;height:10px;border-radius:2px;}
+
+  table{width:100%; border-collapse:collapse; font-size:13px;}
+  th{
+    text-align:left; font-size:11px; color:var(--text-dim); text-transform:uppercase;
+    letter-spacing:0.05em; padding:8px 10px; border-bottom:1px solid var(--panel-line); font-family:var(--mono);
+  }
+  td{padding:10px 10px; border-bottom:1px solid var(--panel-line); vertical-align:middle;}
+  .risk-badge{
+    display:inline-block; padding:3px 9px; border-radius:20px; font-size:11px; font-family:var(--mono);
+  }
+  .risk-low{background:rgba(95,214,138,0.12); color:var(--green);}
+  .risk-med{background:rgba(242,184,75,0.14); color:var(--amber);}
+  .risk-high{background:rgba(239,100,97,0.14); color:var(--red);}
+  .query-text{color:var(--text-dim); max-width:340px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; display:inline-block;}
+
+  #trendCanvas{width:100%; display:block;}
+
+  footer{margin-top:30px; font-size:11px; color:var(--text-dim); font-family:var(--mono); line-height:1.6; border-top:1px solid var(--panel-line); padding-top:16px;}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>Spectral Calibration Console <span>// wigner-rmt</span></h1>
+    <div class="subtitle">random-matrix uncertainty monitoring — model: enterprise-llm-v3</div>
+  </div>
+  <div class="liveflag"><div class="dot"></div> LIVE · sampling every request</div>
+</header>
+
+<div class="kpis">
+  <div class="card">
+    <div class="kpi-label">Mean Spectral Deviation</div>
+    <div class="kpi-value" id="kpiMean">—</div>
+    <div class="kpi-sub">last 24h, rolling</div>
+  </div>
+  <div class="card">
+    <div class="kpi-label">Flagged Responses</div>
+    <div class="kpi-value" id="kpiFlagged">—</div>
+    <div class="kpi-sub up">↑ routed to human review</div>
+  </div>
+  <div class="card">
+    <div class="kpi-label">Requests Scored</div>
+    <div class="kpi-value" id="kpiTotal">—</div>
+    <div class="kpi-sub">today</div>
+  </div>
+  <div class="card">
+    <div class="kpi-label">Review Queue Depth</div>
+    <div class="kpi-value" id="kpiQueue">—</div>
+    <div class="kpi-sub">avg wait 4.2 min</div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="card">
+    <div class="panel-title">Eigenvalue Spectrum vs. Wigner Semicircle</div>
+    <div class="panel-desc">Empirical eigenvalues of the symmetrized attention matrix for the selected response, plotted against the theoretical semicircle bulk. Points outside the curve are flagged outliers.</div>
+    <canvas id="semicircleCanvas" height="230"></canvas>
+    <div class="legend">
+      <div class="legend-item"><span class="swatch" style="background:var(--cyan);"></span>theoretical bulk</div>
+      <div class="legend-item"><span class="swatch" style="background:var(--text);"></span>eigenvalues (in-bulk)</div>
+      <div class="legend-item"><span class="swatch" style="background:var(--red);"></span>outliers</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="panel-title">Deviation Score — 24h Trend</div>
+    <div class="panel-desc">Rolling mean spectral deviation score across all scored requests. Dashed line marks the review threshold.</div>
+    <canvas id="trendCanvas" height="230"></canvas>
+  </div>
+</div>
+
+<div class="card">
+  <div class="panel-title">Recent Flagged Requests</div>
+  <div class="panel-desc">Highest deviation-score responses in the last hour. This queue is for human review, not automatic rejection.</div>
+  <table>
+    <thead>
+      <tr><th>Time</th><th>Query</th><th>Score</th><th>Risk</th><th>Outlier λ's</th><th>Status</th></tr>
+    </thead>
+    <tbody id="tableBody"></tbody>
+  </table>
+</div>
+
+<footer>
+  NOTE — this console displays a heuristic representational-anomaly signal (Random Matrix Theory / Wigner semicircle deviation), not a validated factual-accuracy or hallucination classifier.<br>
+  Calibrate thresholds against your own labeled correct/incorrect output set before using this for any compliance, clinical, or financial decision. Demo data shown — connect to wigner_calibration.py output to go live.
+</footer>
+
+<script>
+// ---------- mock data generation (swap for real plugin output) ----------
+function seededRandom(seed){ let s = seed; return () => { s = (s*9301+49297)%233280; return s/233280; }; }
+const rand = seededRandom(42);
+function gauss(){ let u=0,v=0; while(u===0)u=rand(); while(v===0)v=rand(); return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v); }
+
+function genSpectrum(anomalous){
+  const n = 80;
+  const R = 14;
+  const eig = [];
+  for(let i=0;i<n;i++){
+    // sample roughly semicircle-shaped via rejection-ish approx
+    let x = (rand()*2-1)*R;
+    eig.push(x * (0.85+rand()*0.15));
+  }
+  const outliers = [];
+  if(anomalous){
+    const c1 = R*1.4 + rand()*6;
+    const c2 = -(R*1.3 + rand()*4);
+    outliers.push(c1, c2);
+  }
+  return {eig, outliers, R};
+}
+
+const spectrum = genSpectrum(true);
+
+function drawSemicircle(){
+  const canvas = document.getElementById('semicircleCanvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width = canvas.clientWidth * 2;
+  const h = canvas.height = 460;
+  ctx.scale(2,2);
+  const W = w/2, H = h/2;
+  ctx.clearRect(0,0,W,H);
+
+  const R = spectrum.R;
+  const pad = 40;
+  const scale = (W - pad*2) / (R*2*1.6);
+  const cx = W/2, cy = H - 40;
+
+  // theoretical semicircle curve
+  ctx.beginPath();
+  ctx.strokeStyle = '#4FD1E8';
+  ctx.lineWidth = 2;
+  for(let i=0;i<=200;i++){
+    const x = -R + (2*R*i/200);
+    const y = Math.sqrt(Math.max(0, R*R - x*x));
+    const px = cx + x*scale;
+    const py = cy - y*scale*1.4;
+    if(i===0) ctx.moveTo(px,py); else ctx.lineTo(px,py);
+  }
+  ctx.stroke();
+  ctx.fillStyle = 'rgba(79,209,232,0.08)';
+  ctx.lineTo(cx+R*scale, cy);
+  ctx.lineTo(cx-R*scale, cy);
+  ctx.fill();
+
+  // baseline
+  ctx.strokeStyle = '#1E2530';
+  ctx.beginPath(); ctx.moveTo(pad,cy); ctx.lineTo(W-pad,cy); ctx.stroke();
+
+  // eigenvalues (jittered vertically for visibility)
+  spectrum.eig.forEach((x,idx)=>{
+    const px = cx + x*scale;
+    const py = cy - 6 - (idx%5)*4;
+    ctx.beginPath();
+    ctx.arc(px, py, 2.6, 0, Math.PI*2);
+    ctx.fillStyle = '#DCE3EA';
+    ctx.fill();
+  });
+
+  // outliers
+  spectrum.outliers.forEach((x,idx)=>{
+    const px = cx + x*scale;
+    const py = cy - 30;
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI*2);
+    ctx.fillStyle = '#EF6461';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(px, py, 9, 0, Math.PI*2);
+    ctx.strokeStyle = 'rgba(239,100,97,0.5)';
+    ctx.stroke();
+  });
+
+  ctx.fillStyle = '#7C8896';
+  ctx.font = '11px monospace';
+  ctx.fillText('-R', cx - R*scale - 10, cy+16);
+  ctx.fillText('0', cx-4, cy+16);
+  ctx.fillText('+R', cx + R*scale - 6, cy+16);
+}
+drawSemicircle();
+window.addEventListener('resize', drawSemicircle);
+
+function drawTrend(){
+  const canvas = document.getElementById('trendCanvas');
+  const ctx = canvas.getContext('2d');
+  const w = canvas.width = canvas.clientWidth * 2;
+  const h = canvas.height = 460;
+  ctx.scale(2,2);
+  const W = w/2, H = h/2;
+  ctx.clearRect(0,0,W,H);
+
+  const pts = [];
+  let v = 0.08;
+  for(let i=0;i<48;i++){
+    v += (rand()-0.45)*0.02;
+    v = Math.max(0.02, Math.min(0.45, v));
+    if(i===30) v += 0.18; // spike event
+    pts.push(v);
+  }
+
+  const pad = 30;
+  const top = 20, bottom = H-30;
+  const threshold = 0.3;
+
+  function yFor(val){ return bottom - val*(bottom-top)/0.5; }
+  function xFor(i){ return pad + i*(W-pad*2)/(pts.length-1); }
+
+  // threshold dashed line
+  ctx.strokeStyle = '#F2B84B';
+  ctx.setLineDash([4,4]);
+  ctx.beginPath();
+  ctx.moveTo(pad, yFor(threshold));
+  ctx.lineTo(W-pad, yFor(threshold));
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#F2B84B';
+  ctx.font = '11px monospace';
+  ctx.fillText('review threshold', pad, yFor(threshold)-8);
+
+  // trend line
+  ctx.beginPath();
+  ctx.strokeStyle = '#4FD1E8';
+  ctx.lineWidth = 2;
+  pts.forEach((p,i)=>{
+    const x = xFor(i), y = yFor(p);
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+
+  // fill under
+  ctx.lineTo(xFor(pts.length-1), bottom);
+  ctx.lineTo(xFor(0), bottom);
+  ctx.closePath();
+  ctx.fillStyle = 'rgba(79,209,232,0.08)';
+  ctx.fill();
+
+  // axis
+  ctx.strokeStyle = '#1E2530';
+  ctx.beginPath(); ctx.moveTo(pad,bottom); ctx.lineTo(W-pad,bottom); ctx.stroke();
+}
+drawTrend();
+window.addEventListener('resize', drawTrend);
+
+// ---------- KPIs ----------
+document.getElementById('kpiMean').textContent = '0.14';
+document.getElementById('kpiFlagged').textContent = '37';
+document.getElementById('kpiTotal').textContent = '12,480';
+document.getElementById('kpiQueue').textContent = '9';
+
+// ---------- table ----------
+const rows = [
+  {t:'10:42:03', q:'What were the covenant terms on the Meridian credit facility?', score:0.71, risk:'high', out:2, status:'Pending review'},
+  {t:'10:38:51', q:'Summarize patient intake notes for case #4471', score:0.58, risk:'high', out:3, status:'Escalated'},
+  {t:'10:31:17', q:'Draft response re: overdraft dispute policy exception', score:0.44, risk:'med', out:1, status:'Pending review'},
+  {t:'10:22:04', q:'Compare Q3 vs Q2 regional loan default rates', score:0.39, risk:'med', out:1, status:'Cleared'},
+  {t:'10:15:38', q:'Explain the KYC exemption criteria for trust accounts', score:0.33, risk:'med', out:0, status:'Cleared'},
+];
+const tbody = document.getElementById('tableBody');
+rows.forEach(r=>{
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="font-family:var(--mono); color:var(--text-dim);">${r.t}</td>
+    <td><span class="query-text">${r.q}</span></td>
+    <td style="font-family:var(--mono);">${r.score.toFixed(2)}</td>
+    <td><span class="risk-badge risk-${r.risk}">${r.risk.toUpperCase()}</span></td>
+    <td style="font-family:var(--mono);">${r.out}</td>
+    <td style="color:var(--text-dim);">${r.status}</td>
+  `;
+  tbody.appendChild(tr);
+});
+</script>
+
+</body>
+</html>

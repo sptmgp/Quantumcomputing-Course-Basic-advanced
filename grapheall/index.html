@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GRAPESPT — GRAPE &amp; CRAB, bilingual</title>
+<style>
+  :root{
+    --bg:#18271E; --card:#233524; --gold:#E8C468; --white:#F3F1E7; --muted:#AEBCA9;
+    --serif: Georgia, 'Times New Roman', serif;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh; background:var(--bg); color:var(--white);
+    font-family:var(--serif); display:flex; align-items:center; justify-content:center; padding:5vh 5vw;
+  }
+  .wrap{ max-width:760px; width:100%; }
+  h1{ font-size:2rem; margin:0 0 0.3rem 0; }
+  .sub{ color:var(--muted); font-style:italic; margin:0 0 2.5rem 0; }
+  .card{
+    background:var(--card); border-radius:14px; padding:1.6rem 1.8rem; margin-bottom:1.2rem;
+    display:flex; align-items:center; justify-content:space-between; gap:1.5rem; text-decoration:none; color:inherit;
+  }
+  .card:hover{ background:#28402c; }
+  .card h2{ font-size:1.2rem; margin:0 0 0.35rem 0; color:var(--gold); }
+  .card p{ font-size:0.92rem; color:var(--muted); margin:0; line-height:1.4; }
+  .arrow{ font-size:1.6rem; color:var(--gold); flex-shrink:0; }
+  .foot{ margin-top:2rem; font-size:0.8rem; color:var(--muted); text-align:center; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>GRAPESPT</h1>
+  <p class="sub">Control óptimo cuántico — GRAPE &amp; CRAB · Quantum optimal control, bilingual (ES/EN)</p>
+
+  <a class="card" href="Control_Optimo_Cuantico_GRAPE_CRAB.html">
+    <div>
+      <h2>Presentación / Presentation</h2>
+      <p>11 diapositivas — definición, GRAPE, CRAB, la analogía ascenso/descenso, y por qué la computación cuántica lo necesita. Alterna ES/EN con un clic.<br>
+      11 slides — definition, GRAPE, CRAB, the ascent/descent analogy, and why quantum computing needs it. Toggle ES/EN with one click.</p>
+    </div>
+    <div class="arrow">→</div>
+  </a>
+
+  <a class="card" href="GRAPE_Qubit_Interactive_Demo.html">
+    <div>
+      <h2>Demo interactiva / Interactive demo</h2>
+      <p>Un GRAPE real corriendo en el navegador: elige una puerta objetivo y observa el pulso converger en la esfera de Bloch. Bilingüe.<br>
+      A real GRAPE optimizer running in your browser: pick a target gate and watch the pulse converge on the Bloch sphere. Bilingual.</p>
+    </div>
+    <div class="arrow">→</div>
+  </a>
+
+  <div class="foot">sptmgp / GRAPESPT</div>
+</div>
+</body>
+</html>

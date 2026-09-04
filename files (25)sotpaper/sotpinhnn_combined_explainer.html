@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>sotpinhnn — SOT, PINN, and HNN for Physical Simulation</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.min.js"></script>
+<style>
+  :root{
+    --bg:#fdfcf9; --ink:#1e1e1e; --accent:#b5442e; --accent2:#2f6b4f; --accent-soft:#f4e4de; --accent2-soft:#e2f0e8;
+    --line:#e4ded3; --mono:'IBM Plex Mono',monospace; --sans:'Georgia',serif;
+  }
+  body{ font-family: var(--sans); background:var(--bg); color:var(--ink); max-width:900px; margin:0 auto; padding:50px 24px 100px; line-height:1.65; }
+  h1{ font-size:34px; border-bottom:3px solid var(--accent); padding-bottom:14px; }
+  h2{ font-size:24px; margin-top:56px; color:var(--accent); border-top:1px solid var(--line); padding-top:36px; }
+  h2.green{ color:var(--accent2); }
+  h3{ font-size:18px; margin-top:30px; }
+  .tag{ display:inline-block; background:var(--accent-soft); color:var(--accent); font-family:var(--mono); font-size:12px; padding:3px 10px; border-radius:12px; margin-bottom:14px; }
+  .hook{ font-size:19px; font-style:italic; border-left:4px solid var(--accent); padding-left:18px; margin:24px 0; color:#444; }
+  img,video{ max-width:100%; border:1px solid var(--line); border-radius:6px; margin:14px 0; }
+  .caption{ font-size:13px; color:#777; margin-top:-8px; margin-bottom:20px; }
+  table{ width:100%; border-collapse:collapse; margin:16px 0; font-size:14px; }
+  th{ text-align:left; background:var(--accent-soft); padding:8px 10px; }
+  td{ padding:8px 10px; border-bottom:1px solid var(--line); }
+  code{ background:#f0ece2; padding:2px 6px; border-radius:4px; font-family:var(--mono); font-size:13px; }
+  .box{ background:#faf7f0; border:1px solid var(--line); border-radius:8px; padding:18px 22px; margin:18px 0; }
+  .box.green{ background:#f5faf6; border-color:#dfe8e2; }
+  .proof{ border-left:4px solid var(--accent2); background:#eef7f0; padding:14px 18px; margin:18px 0; font-size:14.5px; }
+  .warn{ border-left:4px solid #c98a00; background:#fdf6e6; padding:14px 18px; margin:18px 0; font-size:14px; }
+  .industry{ border-left:4px solid #2b5a8a; background:#eaf1f8; padding:14px 18px; margin:14px 0; font-size:14.5px; }
+  .toc{ background:#f6f3ea; border:1px solid var(--line); border-radius:8px; padding:20px 26px; margin:24px 0; font-family:var(--mono); font-size:13.5px; }
+  .toc a{ color:var(--accent); text-decoration:none; }
+  .toc li{ margin:4px 0; }
+  .gallery{ display:grid; grid-template-columns:1fr 1fr; gap:16px; margin:20px 0; }
+  .gallery figure{ margin:0; }
+  .gallery figcaption{ font-size:12px; color:#777; margin-top:4px; }
+  footer{ margin-top:70px; font-size:12px; color:#999; border-top:1px solid var(--line); padding-top:16px; }
+  .objectives li{ margin:10px 0; }
+</style>
+</head>
+<body>
+
+<span class="tag">sotpinhnn / docs / index.html</span>
+<h1>Split-Operator Techniques, Physics-Informed Neural Networks, and Hamiltonian Neural Networks</h1>
+<p class="hook">Why the equation that governs how quantum computers lose their state, how chips simulate charge transport, and how plasma physicists track particle clouds — is the same equation, and why teaching an AI to respect it exactly, rather than approximately, may matter to the industries that depend on it.</p>
+
+<div class="toc">
+<b>On this page:</b>
+<ul>
+<li><a href="#industry">1. Why this matters industrially — SOT, Lindblad, and the AI era</a></li>
+<li><a href="#objectives">2. This paper's objectives</a></li>
+<li><a href="#sot">3. The split-operator method: phase space, exactly</a></li>
+<li><a href="#pinn">4. How the PINN fails</a></li>
+<li><a href="#hnn">5. How the HNN fixes it — by construction</a></li>
+<li><a href="#gallery">6. Full animation gallery</a></li>
+<li><a href="#limits">7. Honest limitations</a></li>
+</ul>
+</div>
+
+<h2 id="industry">1. Why this matters industrially</h2>
+
+<h3>The split-operator technique (SOT) — the workhorse nobody outside physics has heard of</h3>
+<p>Split-operator techniques propagate a probability density through phase space exactly, using fast Fourier transforms. They are the standard tool for simulating quantum wavepackets, plasma kinetics, and classical chaotic systems. Their limitation is well known and unavoidable: the computational grid needed grows exponentially with the number of physical dimensions — the "curse of dimensionality." This is precisely why machine learning has been proposed as an alternative: a neural network doesn't need a grid at all.</p>
+
+<h3>The same mathematics runs three industries</h3>
+<div class="industry">
+<b>Quantum computing (IBM).</b> Every real quantum computer loses its delicate quantum state to its environment — a process described by the <i>Lindblad master equation</i>, the direct quantum generalization of the classical transport equation SOT solves. This isn't theoretical: IBM's own Qiskit Runtime uses a Pauli-Lindblad noise model as the core of its production error-mitigation stack, fitted to real hardware measurements and used to mathematically correct results from actual quantum chips.
+</div>
+<div class="industry">
+<b>Chip design (Intel, Samsung, and every major semiconductor manufacturer).</b> How electrons move through a transistor is governed by the <i>Boltzmann transport equation</i> — mathematically the same family as the Liouville equation this page is about, just for charge carriers instead of a single particle. This is the physics underneath TCAD (Technology Computer-Aided Design), the simulation software every chip manufacturer depends on to design transistors before fabrication. Samsung Electronics has published research combining deep learning with TCAD specifically because full Boltzmann-equation simulation is too slow for production use; other published work reports machine-learning-accelerated TCAD achieving speedups of several orders of magnitude on convergence-limited cases. Physics-informed neural networks have already been applied directly to Boltzmann-transport-based device modeling in the research literature.
+</div>
+<div class="industry">
+<b>Large-scale AI-for-science efforts (Google and others).</b> Beyond this specific equation family, major AI labs have made substantial, publicly known investments in using neural networks to accelerate physical simulation generally — weather, materials discovery, molecular dynamics. The specific question this repository asks — <i>does a neural network trained to accelerate a physics simulation actually respect the physics, or just approximate the training signal</i> — is a question that applies directly to that broader effort, not only to the one system tested here.
+</div>
+
+<h3>Why this is urgent for "the AI era" specifically</h3>
+<p>The moment a company replaces a slow, exact numerical method with a fast neural network, they inherit a new risk that the exact method never had: <b>the network can be wrong in a way that looks right.</b> A traditional numerical solver either converges or visibly fails. A trained neural network reports a smooth, low training loss <i>regardless</i> of whether it's quietly violating the physics — as this repository demonstrates concretely, not hypothetically. As AI-accelerated simulation moves from research demos toward production use in exactly these industries, knowing how to detect and prevent this specific failure mode stops being an academic curiosity.</p>
+
+<h2 id="objectives">2. This paper's objectives</h2>
+<ol class="objectives">
+<li><b>Test whether AI can genuinely replace a trusted physics solver</b> — not in theory, but on a real, exactly-solvable benchmark system, so the answer is measurable rather than argued.</li>
+<li><b>Diagnose the mechanism when it fails</b>, not just document that it does — find the specific reason a network can train "successfully" while violating a conservation law.</li>
+<li><b>Verify that diagnosis independently</b>, on a different physical system (a quantum qubit) governed by the same mathematical structure, to confirm the explanation is general and not a one-off artifact.</li>
+<li><b>Build and mathematically prove a structural fix</b> — an architecture where the conservation law is guaranteed by a theorem, not by hoping training went well.</li>
+<li><b>Honestly test that fix's actual limits</b> — under real chaos, across random initialization, and under added complexity — rather than reporting only the best case.</li>
+</ol>
+
+<h2 id="sot">3. The split-operator method: phase space, exactly</h2>
+<p>Before either neural network enters the picture, here is the thing being approximated: the exact classical flow through phase space, computed via the method of characteristics (the same physics SOT itself relies on).</p>
+<img src="../figures/propagator_comparison.png" alt="Phase space propagator, streamlines and trajectories">
+<p class="caption">The double-well phase portrait (gray streamlines), with a ring of particles (blue) launched at t=0 and their exact positions at t=1 (red). Notice the ring visibly shears — the beginning of the filamentation that becomes full chaos under repeated kicks.</p>
+
+<img src="../animations/phase_space_trajectories.gif" alt="Animated phase space trajectories">
+<p class="caption"><b>Animated:</b> the same particles, moving continuously through <code>(q,p)</code> space, exact dynamics (blue) versus the HNN's learned dynamics (red) — introduced properly in Section 5 below.</p>
+
+<h2 id="pinn" class="tag" style="display:block;width:fit-content;">4. How the PINN fails</h2>
+<p class="hook">A neural network can train "successfully" — smooth loss curve, low final error — while quietly violating a law of physics its own equation says it must obey.</p>
+
+<h3>The equation being solved</h3>
+<div class="box">
+$$\frac{\partial \rho}{\partial t} + p\,\frac{\partial \rho}{\partial q} - V'(q)\,\frac{\partial \rho}{\partial p} = 0$$
+</div>
+<p>A physics-informed neural network (PINN) approximates the solution directly: a network <code>ρ_θ(q,p,t)</code> is trained so that plugging it into the equation above gives close to zero, using automatic differentiation for exact derivatives. This sounds reasonable. It is not sufficient.</p>
+
+<img src="../figures/pinn_vs_exact_t1.png" alt="Exact vs PINN density comparison">
+<p class="caption">Exact reference (left) vs. the trained PINN's prediction (center) vs. their difference (right).</p>
+
+<table>
+<tr><th>Diagnostic</th><th>Correct value</th><th>PINN's value</th></tr>
+<tr><td>Total probability (mass)</td><td>1.000</td><td>3.6 (260% too high)</td></tr>
+<tr><td>Average energy</td><td>constant</td><td>off by a factor of ~270</td></tr>
+<tr><td>Minimum density</td><td>≥ 0</td><td>−0.014 (negative — unphysical)</td></tr>
+</table>
+
+<h3>The mechanism</h3>
+<img src="../figures/fig4_mass_vs_time.png" alt="Mass conservation vs time">
+<p class="caption">The mass violation is present from the very first instant and barely changes over the whole simulated period — evidence it's a static defect, not accumulating error.</p>
+<ol>
+<li>The training domain is far larger than where the true answer lives (a tight blob vs. a huge box).</li>
+<li>A flat, low-amplitude background trivially satisfies the equation almost everywhere in that empty space.</li>
+<li>The optimizer has no incentive to remove it — it costs nothing against the loss.</li>
+<li>Integrated over the whole domain, that faint background is exactly the missing/excess mass.</li>
+</ol>
+
+<h3>Confirming it: fixes that don't work</h3>
+<div class="gallery">
+<figure><img src="../figures/fig5_activation_ablation.png"><figcaption>Activation function — makes it worse.</figcaption></figure>
+<figure><img src="../figures/fig6_collocation_ablation.png"><figcaption>Collocation density — doesn't help.</figcaption></figure>
+</div>
+
+<h3>Where does the PINN's density even go?</h3>
+<img src="../figures/pinn_pq_peak_trajectory.png" alt="PINN density peak barely moves">
+<p class="caption">Tracking the PINN's density peak in <code>(q,p)</code> over time (orange) against the true trajectory (blue). The PINN's peak jumps once, then <b>freezes</b> for the rest of the simulation — it isn't learning the dynamics at all.</p>
+
+<div class="warn">
+<b>Watch it happen:</b> in the training animation below, the mass number bounces unpredictably as the loss curve looks like it's converging nicely — including briefly going <i>negative</i>.
+</div>
+
+<h2 id="hnn" class="green" style="display:block;width:fit-content;">5. How the HNN fixes it — by construction, not by training</h2>
+<p class="hook">Don't train a network to output a density that happens to conserve probability. Train it to learn something whose structure makes conservation mathematically unavoidable — before training even starts.</p>
+
+<h3>What the network learns instead</h3>
+<div class="box green">
+$$\dot q_{\text{pred}} = \frac{\partial H_\theta}{\partial p}, \qquad \dot p_{\text{pred}} = -\frac{\partial H_\theta}{\partial q}$$
+</div>
+<p>A Hamiltonian Neural Network (HNN) learns a scalar function <code>H<sub>θ</sub>(q,p)</code> from local motion data, then a density is propagated by moving points along this learned flow — the same method of characteristics used for the exact SOT reference above, just with a learned right-hand side.</p>
+
+<h3 id="proof">The proof</h3>
+<div class="proof">
+<b>Claim:</b> for <i>any</i> function <code>H<sub>θ</sub>(q,p)</code>, however inaccurate, the vector field above is exactly divergence-free.<br><br>
+<b>Proof:</b>
+$$\nabla\cdot(\dot q,\dot p) = \frac{\partial^2 H_\theta}{\partial q\partial p} - \frac{\partial^2 H_\theta}{\partial p\partial q} = 0$$
+by equality of mixed partial derivatives (Clairaut's theorem) — true for <i>any</i> twice-differentiable function, trained well or badly.
+</div>
+<p>Zero divergence means the flow cannot compress or expand phase-space volume — Liouville's theorem. <b>Mass conservation isn't something this network has to learn. It's structurally incapable of violating it.</b></p>
+
+<div class="warn">
+In the HNN training animation below, reported mass reads <b>1.000 at epoch 0</b> — before any training. What improves over training is only the shape. That's the theorem working, not the optimizer.
+</div>
+
+<h3>The evidence</h3>
+<img src="../figures/hnn_comparison.png" alt="HNN vs exact density comparison">
+<table>
+<tr><th>Configuration</th><th>Mass</th><th>Pointwise error</th></tr>
+<tr><td>Standard PINN</td><td>3.6</td><td>6.1×10⁻⁵</td></tr>
+<tr><td>Hard-constraint PINN + data</td><td>1.0000</td><td>7.8×10⁻⁶</td></tr>
+<tr><td><b>Hamiltonian Neural Network</b></td><td><b>1.0000042</b></td><td><b>5.8×10⁻⁶</b></td></tr>
+</table>
+
+<h3>What the network actually learned</h3>
+<div class="gallery">
+<figure><img src="../figures/hnn_hamiltonian_comparison.png"><figcaption>True energy landscape vs. what the network's learned function looks like — the double-well shape emerges directly from local motion data.</figcaption></figure>
+<figure><img src="../figures/hnn_vector_field_comparison.png"><figcaption>True vs. learned vector field — nearly indistinguishable.</figcaption></figure>
+</div>
+
+<h3>Does it survive real chaos?</h3>
+<img src="../figures/chaos_multikick_snapshots.png" alt="Chaos tracking across kick periods">
+<p class="caption">Exact (top) vs. HNN-propagated (bottom) under the actual periodically-kicked chaotic map — the horseshoe fold and split into two filaments is correctly reproduced through 4 kick periods.</p>
+<img src="../figures/chaos_error_growth.png" alt="Error growth under chaos">
+<p class="caption"><b>Honestly:</b> quantitative error still grows ~15× over those periods — the expected signature of chaos amplifying small errors, not evidence the fix is fake.</p>
+
+<h3>Where it still struggles</h3>
+<img src="../figures/network_trajectory_comparison.png" alt="Coupled oscillator network">
+<p class="caption">Extended to two coupled oscillators: the linear dynamics is learned almost exactly; the nonlinear coupling between the two nodes is not.</p>
+<div class="warn">Across 5 random seeds, chaos-tracking accuracy varied by up to <b>38×</b> — training loss alone did not predict which seed would perform best.</div>
+
+<h2 id="gallery">6. Full animation gallery</h2>
+<p>Every GIF referenced above, in one place.</p>
+<div class="gallery">
+<figure><img src="../animations/pinn_training.gif"><figcaption><b>pinn_training.gif</b> — density regression over 1500 epochs. Mass drifts, briefly goes negative, never converges to 1.</figcaption></figure>
+<figure><img src="../animations/hnn_training.gif"><figcaption><b>hnn_training.gif</b> — mass reads ~1.000 from epoch 0; only shape improves with training.</figcaption></figure>
+<figure><img src="../animations/phase_space_trajectories.gif"><figcaption><b>phase_space_trajectories.gif</b> — exact vs. HNN-learned particle motion through the double-well phase portrait.</figcaption></figure>
+<figure><img src="../animations/combined_pq_comparison.gif"><figcaption><b>combined_pq_comparison.gif</b> — exact, HNN, and the PINN's frozen density peak, all three moving (or not) together.</figcaption></figure>
+</div>
+
+<h2 id="limits">7. Honest limitations</h2>
+<ul>
+<li><b>Low-dimensional toy problem.</b> 2D classical phase space, one qubit, one small 4D network — the higher-dimensional regime motivating AI-based solvers in the first place is not yet tested.</li>
+<li><b>HNN training data came from the true equations of motion.</b> A real application without that luxury — learning from noisy observations instead — is untested here.</li>
+<li><b>Single-run point estimates are unreliable.</b> The 5-seed test showed up to 38× spread; report a distribution, not one run, if you deploy this.</li>
+<li><b>The chaos test only covers 4 kick periods.</b> Whether the HNN's advantage plateaus, keeps eroding, or is eventually overtaken at longer horizons is unknown.</li>
+<li><b>This is a preprint-stage draft</b>, not peer-reviewed work. Real authorship, independent expert review, and an AI-assistance disclosure are still outstanding.</li>
+</ul>
+
+<footer>
+Part of the <a href="../README.md">sotpinhnn</a> repository. Full derivations, all figures, and every ablation in <a href="../paper/manuscript.pdf">the complete paper (PDF)</a>. This page and the underlying research were built with AI assistance (Claude); every bug caught during that process is disclosed in the paper's own text rather than silently fixed.
+</footer>
+
+</body>
+</html>

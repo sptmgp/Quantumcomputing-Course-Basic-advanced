@@ -1,0 +1,2299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Renormalization Theory in Quantum Intelligence</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg-0:#0a0f1c;
+  --bg-1:#101a2e;
+  --bg-2:#152238;
+  --panel:rgba(255,255,255,0.045);
+  --panel-border:rgba(255,255,255,0.09);
+  --ink:#eef3f8;
+  --muted:#93a6bd;
+  --muted-2:#6c7f97;
+  --teal:#5eead4;
+  --teal-dim:rgba(94,234,212,0.14);
+  --amber:#f4b942;
+  --amber-dim:rgba(244,185,66,0.16);
+  --danger:#f2735a;
+  --radius:16px;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;background:#000;font-family:'Inter',sans-serif;}
+.stage{
+  width:100%;
+  max-width:1280px;
+  aspect-ratio:16/9;
+  margin:0 auto;
+  position:relative;
+  overflow:hidden;
+  background:
+    radial-gradient(90% 70% at 85% -10%, rgba(94,234,212,0.10) 0%, transparent 55%),
+    radial-gradient(70% 60% at 5% 110%, rgba(244,185,66,0.07) 0%, transparent 55%),
+    linear-gradient(160deg, var(--bg-1) 0%, var(--bg-0) 55%, #060910 100%);
+  color:var(--ink);
+  display:flex;
+  flex-direction:column;
+  font-size:clamp(11px, 1.05vw, 16px);
+}
+.stage::before{
+  content:"";
+  position:absolute; inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: radial-gradient(60% 60% at 50% 40%, black 0%, transparent 75%);
+  pointer-events:none;
+}
+
+/* ---- topbar ---- */
+.topbar{
+  position:relative; z-index:3;
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 2.6em 3em 0;
+}
+.kicker{
+  font-family:'JetBrains Mono',monospace;
+  font-weight:600;
+  font-size:0.78em;
+  letter-spacing:.07em;
+  text-transform:uppercase;
+  color:var(--amber);
+  display:flex; align-items:center; gap:.6em;
+}
+.kicker::before{
+  content:"";
+  width:7px;height:7px;border-radius:50%;
+  background:var(--amber);
+  box-shadow:0 0 0 4px var(--amber-dim);
+}
+
+.lang-toggle{
+  position:relative; z-index:3;
+  display:inline-flex; align-items:center;
+  padding:3px; border-radius:999px;
+  background:var(--panel); border:1px solid var(--panel-border);
+  backdrop-filter:blur(6px);
+}
+.lang-toggle .thumb{
+  position:absolute; top:3px; left:3px;
+  height:calc(100% - 6px);
+  border-radius:999px;
+  background:linear-gradient(180deg, #7af0e0, var(--teal));
+  transition:transform .3s cubic-bezier(.65,0,.35,1), width .3s cubic-bezier(.65,0,.35,1);
+}
+.lang-toggle button{
+  position:relative; z-index:1; border:none; background:transparent; cursor:pointer;
+  padding:.55em 1.2em; font-family:'Inter',sans-serif; font-weight:700;
+  font-size:.72em; letter-spacing:.04em; color:var(--muted);
+  transition:color .25s ease;
+}
+.lang-toggle button.active{ color:#04211c; }
+
+/* ---- main content ---- */
+.content{
+  position:relative; z-index:2;
+  flex:1;
+  padding: 1.6em 3em 1.2em;
+  display:flex; flex-direction:column; justify-content:center;
+  gap:1em;
+  overflow:hidden;
+}
+h1.title{
+  margin:0; font-family:'Space Grotesk',sans-serif; font-weight:700;
+  font-size:2.15em; line-height:1.12; letter-spacing:-.01em;
+  max-width:24ch;
+}
+.subtitle{ margin:0; color:var(--muted); font-size:1.15em; font-weight:500; max-width:38ch;}
+.body-text{ margin:0; color:var(--muted); font-size:1.05em; line-height:1.6; max-width:62ch;}
+.bullets{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.55em; max-width:64ch;}
+.bullets li{ position:relative; padding-left:1.5em; color:#dbe6ef; font-size:1.02em; line-height:1.5;}
+.bullets li::before{ content:"→"; position:absolute; left:0; color:var(--teal); font-weight:700;}
+.callout{
+  margin-top:.3em;
+  border-left:2px solid var(--amber);
+  padding:.7em 1em;
+  background:var(--amber-dim);
+  border-radius:0 10px 10px 0;
+  color:#f7e2b4;
+  font-size:.96em;
+  line-height:1.5;
+  max-width:60ch;
+}
+.formula-block{ display:flex; flex-direction:column; gap:.4em; margin:.2em 0;}
+.formula{
+  font-family:'JetBrains Mono',monospace;
+  font-size:1.15em; color:var(--teal); background:var(--teal-dim);
+  border:1px solid rgba(94,234,212,0.25);
+  padding:.55em .9em; border-radius:10px; display:inline-block; width:fit-content;
+}
+.icon-row{ font-size:2.2em; letter-spacing:.3em; }
+
+/* quiz */
+.question{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:1.25em; line-height:1.35; max-width:56ch;}
+.options{ display:grid; grid-template-columns:1fr 1fr; gap:.6em; max-width:66ch; margin-top:.3em;}
+.option{
+  display:flex; align-items:flex-start; gap:.6em;
+  padding:.65em .9em; border-radius:10px;
+  background:var(--panel); border:1px solid var(--panel-border);
+  font-size:.92em; color:#dbe6ef; cursor:pointer;
+  transition:background .2s, border-color .2s, transform .15s;
+}
+.option:hover{ border-color:rgba(94,234,212,0.4); transform:translateY(-1px);}
+.option.selected{ background:var(--teal-dim); border-color:var(--teal); color:#eafffb;}
+.option.correct{ background:rgba(94,234,212,0.18); border-color:var(--teal); color:#eafffb;}
+.option .letter{
+  font-family:'JetBrains Mono',monospace; font-weight:700; color:var(--teal);
+  flex:0 0 auto;
+}
+.quiz-note{ margin-top:.2em; font-size:.85em; color:var(--muted-2); }
+
+.answer-banner{
+  margin-top:.4em; display:flex; align-items:center; gap:.6em;
+  padding:.65em 1em; border-radius:10px;
+  background:rgba(94,234,212,0.14); border:1px solid rgba(94,234,212,0.35);
+  color:#eafffb; font-size:.95em; font-weight:600; max-width:60ch;
+}
+.answer-banner .tick{ color:var(--teal); font-size:1.2em; }
+
+/* table */
+.tbl-wrap{ overflow:auto; max-width:100%; border-radius:12px; border:1px solid var(--panel-border);}
+table.data{ width:100%; border-collapse:collapse; font-size:.86em;}
+table.data th, table.data td{
+  padding:.55em .8em; text-align:left; border-bottom:1px solid var(--panel-border);
+  color:#dbe6ef; vertical-align:top;
+}
+table.data th{
+  font-family:'JetBrains Mono',monospace; font-size:.82em; letter-spacing:.03em;
+  text-transform:uppercase; color:var(--teal); background:rgba(94,234,212,0.06);
+  font-weight:600;
+}
+table.data tr:last-child td{ border-bottom:none;}
+table.data tbody tr:hover{ background:rgba(255,255,255,0.03);}
+
+/* compare */
+.compare{ display:grid; grid-template-columns:1fr 1fr; gap:1.4em; max-width:78ch;}
+.compare .col h3{ margin:0 0 .5em; font-family:'Space Grotesk',sans-serif; font-size:1.02em; color:var(--ink);}
+.compare .colA h3{ color:var(--muted-2); }
+.compare .colB h3{ color:var(--teal); }
+.compare .col ul{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:.5em;}
+.compare .col li{ font-size:.9em; line-height:1.45; color:#c9d6e3; padding-left:1.2em; position:relative;}
+.compare .colA li::before{ content:"·"; position:absolute; left:0; color:var(--muted-2);}
+.compare .colB li::before{ content:"·"; position:absolute; left:0; color:var(--teal);}
+
+/* stat */
+.stat-row{ display:flex; gap:1.4em; margin-top:.3em; flex-wrap:wrap;}
+.stat-card{
+  flex:1; min-width:220px; padding:1em 1.2em; border-radius:12px;
+  background:var(--panel); border:1px solid var(--panel-border);
+}
+.stat-card .label{ font-size:.78em; text-transform:uppercase; letter-spacing:.06em; color:var(--muted-2); font-family:'JetBrains Mono',monospace;}
+.stat-card .value{ font-family:'Space Grotesk',sans-serif; font-weight:700; font-size:1.5em; margin:.15em 0; color:var(--ink);}
+.stat-card .sub{ font-size:.82em; color:var(--muted);}
+.stat-arrow{ display:flex; align-items:center; font-size:1.6em; color:var(--teal);}
+
+/* diagram (temple->mandala->tensor) */
+.diagram-row{ display:flex; align-items:center; gap:1em; margin:.3em 0 .2em;}
+.diagram-step{
+  flex:1; text-align:center; padding:1.1em .8em; border-radius:12px;
+  background:var(--panel); border:1px solid var(--panel-border);
+}
+.diagram-step .glyph{ font-size:2em; margin-bottom:.3em; }
+.diagram-step .cap{ font-size:.85em; color:var(--muted); font-weight:600;}
+.diagram-arrow{ font-size:1.4em; color:var(--teal); flex:0 0 auto;}
+
+/* coarse graining visual */
+.coarse-row{ display:flex; align-items:center; gap:1.6em; margin:.4em 0;}
+.dotgrid{ display:grid; grid-template-columns:repeat(6,1fr); gap:6px; width:150px;}
+.dotgrid span{ width:9px; height:9px; border-radius:50%; background:rgba(94,234,212,0.55);}
+.dotgrid.coarse{ grid-template-columns:repeat(2,1fr); width:60px; gap:12px;}
+.dotgrid.coarse span{ width:20px; height:20px; background:var(--amber);}
+.coarse-arrow{ font-size:1.6em; color:var(--teal);}
+
+/* title slide */
+.title-slide{ display:flex; flex-direction:column; justify-content:center; gap:.9em; height:100%;}
+.title-slide .kicker{ padding:0; }
+.title-slide h1{ font-size:2.5em; max-width:20ch;}
+.title-slide .subtitle{ font-size:1.2em; color:var(--teal); font-weight:600;}
+.meta-list{ list-style:none; margin:.3em 0 0; padding:0; display:flex; flex-direction:column; gap:.25em;}
+.meta-list li{ font-size:.85em; color:var(--muted);}
+.tagline{
+  margin-top:.6em; font-family:'Space Grotesk',sans-serif; font-style:normal;
+  font-size:1.05em; color:#f7e2b4; border-top:1px solid var(--panel-border); padding-top:.7em;
+  max-width:44ch;
+}
+
+/* closing slide */
+.closing-slide{ display:flex; flex-direction:column; align-items:flex-start; justify-content:center; height:100%; gap:.4em;}
+.closing-slide h1{ font-size:3em;}
+.closing-slide .subtitle{ font-size:1.3em;}
+
+/* quote slide */
+.quote-slide{ display:flex; flex-direction:column; justify-content:center; height:100%; gap:.8em;}
+.quote-slide .body-text{ font-size:1.18em; color:#dbe6ef; max-width:64ch; line-height:1.6;}
+
+/* footer / nav */
+.footer{
+  position:relative; z-index:3;
+  display:flex; align-items:center; justify-content:space-between;
+  padding: 0 3em 1.6em;
+}
+.progress-wrap{ flex:1; margin:0 1.6em; height:3px; background:var(--panel-border); border-radius:3px; overflow:hidden;}
+.progress-bar{ height:100%; background:linear-gradient(90deg,var(--teal),var(--amber)); transition:width .3s ease;}
+.nav-btn{
+  width:2.2em; height:2.2em; border-radius:50%; border:1px solid var(--panel-border);
+  background:var(--panel); color:var(--ink); font-size:1em; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:background .2s, border-color .2s;
+}
+.nav-btn:hover{ border-color:var(--teal); color:var(--teal);}
+.nav-btn:disabled{ opacity:.3; cursor:default;}
+.counter{ font-family:'JetBrains Mono',monospace; font-size:.78em; color:var(--muted-2); white-space:nowrap;}
+.nav-group{ display:flex; align-items:center; gap:.5em;}
+
+@media (max-width:700px){
+  .options{ grid-template-columns:1fr; }
+  .compare{ grid-template-columns:1fr; }
+  h1.title{ font-size:1.5em; }
+  .stage{ font-size: 10px; }
+}
+</style>
+</head>
+<body>
+<div class="stage" id="stage" lang="en">
+  <div class="topbar">
+    <div class="kicker" id="kicker"></div>
+    <div class="lang-toggle" id="langToggle">
+      <div class="thumb" id="thumb"></div>
+      <button type="button" class="active" data-lang="en">ENGLISH</button>
+      <button type="button" data-lang="es">ESPAÑOL</button>
+    </div>
+  </div>
+
+  <div class="content" id="content"></div>
+
+  <div class="footer">
+    <div class="nav-group">
+      <button class="nav-btn" id="prevBtn" aria-label="Previous">‹</button>
+      <span class="counter" id="counter">1 / 60</span>
+      <button class="nav-btn" id="nextBtn" aria-label="Next">›</button>
+    </div>
+    <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+    <span class="counter" id="hint">← → to navigate</span>
+  </div>
+</div>
+
+<script id="slides-data" type="application/json">
+[
+ {
+  "type": "title",
+  "en": {
+   "kicker": "VIT · SCOPE, Vellore · Aug 6, 2025",
+   "title": "Renormalization Theory in Quantum Intelligence",
+   "subtitle": "Unifying Physics, AI, and Intelligent Systems",
+   "meta": [
+    "Dr. Saravana Prakash Thirumuruganandham",
+    "Director of Research & Development, SIT Health and SMART CO",
+    "Catalina Aldaz y Av. Portugal, Quito, Ecuador",
+    "saravana@sit.health"
+   ],
+   "tagline": "Ignore the noise. Zoom out. Focus on what matters."
+  },
+  "es": {
+   "kicker": "VIT · SCOPE, Vellore · 6 de agosto de 2025",
+   "title": "Teoría de la Renormalización en la Inteligencia Cuántica",
+   "subtitle": "Unificando la física, la IA y los sistemas inteligentes",
+   "meta": [
+    "Dr. Saravana Prakash Thirumuruganandham",
+    "Director de Investigación y Desarrollo, SIT Health y SMART CO",
+    "Catalina Aldaz y Av. Portugal, Quito, Ecuador",
+    "saravana@sit.health"
+   ],
+   "tagline": "Ignora el ruido. Aléjate. Concéntrate en lo que importa."
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Historical context",
+   "title": "Fifty years of the renormalization group",
+   "body": [
+    "Renormalization became the breakthrough that made quantum field theory workable in the late 1940s.",
+    "The renormalization-group method has stayed a central tool for new theoretical work ever since.",
+    "Physicist Dmitry Shirkov, who helped pioneer the field alongside Nikolai Bogoliubov, has documented this history first-hand."
+   ]
+  },
+  "es": {
+   "kicker": "Contexto histórico",
+   "title": "Cincuenta años del grupo de renormalización",
+   "body": [
+    "La renormalización fue el avance que volvió manejable a la teoría cuántica de campos a fines de la década de 1940.",
+    "El método del grupo de renormalización sigue siendo una herramienta central para el desarrollo teórico desde entonces.",
+    "El físico Dmitry Shirkov, pionero del campo junto a Nikolái Bogoliúbov, ha documentado esta historia de primera mano."
+   ]
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "RG filters out small contributions at large scales",
+   "title": "A simple polynomial shows the idea",
+   "formula": [
+    "f(x) = 0.01x⁴ + 0.1x² + x"
+   ],
+   "bullets": [
+    "At x = 1, every term contributes about equally — f(1) ≈ 1.11.",
+    "At x = 100, the x⁴ term explodes past 1,000,000 while the rest barely register.",
+    "Zoomed out to large scales, the x⁴ term completely dominates — the others can be ignored."
+   ]
+  },
+  "es": {
+   "kicker": "El GR filtra las contribuciones pequeñas a gran escala",
+   "title": "Un polinomio simple ilustra la idea",
+   "formula": [
+    "f(x) = 0.01x⁴ + 0.1x² + x"
+   ],
+   "bullets": [
+    "En x = 1, todos los términos contribuyen de forma similar — f(1) ≈ 1.11.",
+    "En x = 100, el término x⁴ supera el 1.000.000, mientras el resto casi no cuenta.",
+    "Vistos a gran escala, el término x⁴ domina por completo — los demás se pueden ignorar."
+   ]
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Qubits",
+   "title": "A qubit is the fundamental unit of quantum information",
+   "bullets": [
+    "A superposition is a special state a qubit can be in.",
+    "A qubit is not the same thing as a superposition.",
+    "A qubit can be in a superposition — but it doesn't have to be."
+   ],
+   "callout": "Superposition is a property of qubits. Not all qubits are in superposition."
+  },
+  "es": {
+   "kicker": "Cúbits",
+   "title": "Un cúbit es la unidad fundamental de la información cuántica",
+   "bullets": [
+    "Una superposición es un estado especial en el que puede estar un cúbit.",
+    "Un cúbit no es lo mismo que una superposición.",
+    "Un cúbit puede estar en superposición — pero no tiene que estarlo."
+   ],
+   "callout": "La superposición es una propiedad de los cúbits. No todos los cúbits están en superposición."
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Entanglement",
+   "title": "General quantum state of a qubit",
+   "formula": [
+    "|ψ⟩ = α|0⟩ + β|1⟩"
+   ],
+   "bullets": [
+    "A single qubit can never be entangled — entanglement always requires two or more qubits.",
+    "Entanglement is a property of a system of qubits, not of any individual one.",
+    "The combined state of two (or more) qubits can't be written as a product of their individual states."
+   ]
+  },
+  "es": {
+   "kicker": "Entrelazamiento",
+   "title": "Estado cuántico general de un cúbit",
+   "formula": [
+    "|ψ⟩ = α|0⟩ + β|1⟩"
+   ],
+   "bullets": [
+    "Un solo cúbit nunca puede estar entrelazado — el entrelazamiento siempre requiere dos o más cúbits.",
+    "El entrelazamiento es una propiedad de un sistema de cúbits, no de uno individual.",
+    "El estado combinado de dos (o más) cúbits no puede escribirse como el producto de sus estados individuales."
+   ]
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Entanglement",
+   "title": "The entangled Bell state",
+   "formula": [
+    "|ψ⟩ = 1/√2 · (|00⟩ + |11⟩)   (entanglement)"
+   ],
+   "body": [
+    "This state cannot be factored into two independent one-qubit states — that's exactly what makes it entangled."
+   ]
+  },
+  "es": {
+   "kicker": "Entrelazamiento",
+   "title": "El estado de Bell entrelazado",
+   "formula": [
+    "|ψ⟩ = 1/√2 · (|00⟩ + |11⟩)   (entrelazamiento)"
+   ],
+   "body": [
+    "Este estado no puede factorizarse en dos estados independientes de un cúbit — eso es justamente lo que lo hace entrelazado."
+   ]
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Entanglement",
+   "title": "The cat is linked to the atom",
+   "icon": "⚛️ 🧪 🐱",
+   "bullets": [
+    "There's a cat locked inside a box, together with a tiny radioactive atom.",
+    "If the atom decays, it releases poison and the cat dies.",
+    "If the atom doesn't decay, the cat stays alive."
+   ],
+   "formula": [
+    "|not decayed, alive⟩ = |0⟩|0⟩ = |00⟩",
+    "|decayed, dead⟩ = |1⟩|1⟩ = |11⟩",
+    "|ψ⟩ = 1/√2 · (|00⟩ + |11⟩)"
+   ],
+   "callout": "You cannot separate this into a “just the atom” state and a “just the cat” state — they are linked."
+  },
+  "es": {
+   "kicker": "Entrelazamiento",
+   "title": "El gato está vinculado al átomo",
+   "icon": "⚛️ 🧪 🐱",
+   "bullets": [
+    "Hay un gato encerrado en una caja, junto con un pequeño átomo radiactivo.",
+    "Si el átomo se desintegra, libera veneno y el gato muere.",
+    "Si el átomo no se desintegra, el gato permanece vivo."
+   ],
+   "formula": [
+    "|no desintegrado, vivo⟩ = |0⟩|0⟩ = |00⟩",
+    "|desintegrado, muerto⟩ = |1⟩|1⟩ = |11⟩",
+    "|ψ⟩ = 1/√2 · (|00⟩ + |11⟩)"
+   ],
+   "callout": "No se puede separar esto en un estado de “solo el átomo” y otro de “solo el gato” — están vinculados."
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Entanglement",
+   "title": "When does entanglement play a role?",
+   "bullets": [
+    "It's a Bell state, which passes the test for maximal entanglement — you can't write it as a product.",
+    "Measuring the atom tells you the cat's state immediately.",
+    "If the atom is measured as decayed (1) → the cat is dead (1).",
+    "If the atom is not decayed (0) → the cat is alive (0)."
+   ],
+   "callout": "Before measurement, both atom and cat sit in a shared, mixed, entangled state. After measurement, the whole system collapses to either |00⟩ or |11⟩. Entanglement plays its role before measurement, not after."
+  },
+  "es": {
+   "kicker": "Entrelazamiento",
+   "title": "¿Cuándo entra en juego el entrelazamiento?",
+   "bullets": [
+    "Es un estado de Bell, que cumple la prueba de entrelazamiento máximo — no puede escribirse como un producto.",
+    "Medir el átomo revela de inmediato el estado del gato.",
+    "Si el átomo se mide como desintegrado (1) → el gato está muerto (1).",
+    "Si el átomo no está desintegrado (0) → el gato está vivo (0)."
+   ],
+   "callout": "Antes de medir, el átomo y el gato están en un estado compartido, mixto y entrelazado. Después de medir, todo el sistema colapsa a |00⟩ o a |11⟩. El entrelazamiento actúa antes de medir, no después."
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Entanglement",
+   "title": "What makes entanglement special?",
+   "body": [
+    "It's not just about uncertainty — it's about two systems being uncertain together.",
+    "The state of one depends on the state of the other, even though both are undefined individually."
+   ]
+  },
+  "es": {
+   "kicker": "Entrelazamiento",
+   "title": "¿Qué hace especial al entrelazamiento?",
+   "body": [
+    "No se trata solo de incertidumbre — se trata de que dos sistemas sean incierto juntos.",
+    "El estado de uno depende del estado del otro, aunque ambos estén indefinidos individualmente."
+   ]
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Renormalization (RG)",
+   "title": "How zooming out (RG) simplifies a quantum cat",
+   "bullets": [
+    "The atom is a qubit.",
+    "The cat is a macroscopic system, but treated as coupled to the qubit.",
+    "The cat is made of N ~ 10²⁷ atoms → 2^N possible quantum configurations."
+   ],
+   "callout": "A fully entangled system at this scale is mathematically impossible to handle without simplification."
+  },
+  "es": {
+   "kicker": "Renormalización (GR)",
+   "title": "Cómo alejar la mirada (GR) simplifica a un gato cuántico",
+   "bullets": [
+    "El átomo es un cúbit.",
+    "El gato es un sistema macroscópico, pero se trata como acoplado al cúbit.",
+    "El gato está hecho de N ~ 10²⁷ átomos → 2^N posibles configuraciones cuánticas."
+   ],
+   "callout": "Un sistema totalmente entrelazado a esta escala es matemáticamente imposible de manejar sin simplificarlo."
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Renormalization (RG)",
+   "title": "Why 2^N matters",
+   "bullets": [
+    "RG compresses this information into a macroscopic variable — two amplitudes again, a compressed effective state.",
+    "If N = 50 qubits → 2⁵⁰ ≈ 1.13 × 10¹⁵ amplitudes — already impossible to store on a normal computer.",
+    "At N = 300 qubits, the Hilbert space is larger than the number of atoms in the observable universe."
+   ]
+  },
+  "es": {
+   "kicker": "Renormalización (GR)",
+   "title": "Por qué importa 2^N",
+   "bullets": [
+    "El GR comprime esta información en una variable macroscópica — de nuevo dos amplitudes, un estado efectivo comprimido.",
+    "Si N = 50 cúbits → 2⁵⁰ ≈ 1,13 × 10¹⁵ amplitudes — ya imposible de almacenar en una computadora normal.",
+    "Con N = 300 cúbits, el espacio de Hilbert es mayor que el número de átomos en el universo observable."
+   ]
+  }
+ },
+ {
+  "type": "table",
+  "en": {
+   "kicker": "Renormalization (RG)",
+   "title": "RG compresses information into a macroscopic variable",
+   "bullets": [
+    "Reduces overwhelming microscopic data (every atom in the cat).",
+    "Keeps only effective variables (like alive/dead).",
+    "Allows quantum computers to simulate realistic, large systems."
+   ],
+   "headers": [
+    "Component",
+    "Quantum cat system",
+    "Quantum computer"
+   ],
+   "rows": [
+    [
+     "Microscopic details",
+     "10²⁷ atomic qubits in the cat",
+     "2^N physical qubits"
+    ],
+    [
+     "Goal",
+     "Determine alive / dead",
+     "Predict the final outcome / measurement"
+    ],
+    [
+     "Without RG",
+     "Simulate everything: too hard",
+     "Simulate all qubits: exponential memory"
+    ],
+    [
+     "With RG",
+     "Track only “decayed or not” → “alive/dead”",
+     "Track only entanglement structure (e.g. MPS)"
+    ],
+    [
+     "RG output",
+     "Macroscopic observable (dead/alive)",
+     "Compressed quantum state (MPS/QTT)"
+    ]
+   ]
+  },
+  "es": {
+   "kicker": "Renormalización (GR)",
+   "title": "El GR comprime la información en una variable macroscópica",
+   "bullets": [
+    "Reduce el abrumador volumen de datos microscópicos (cada átomo del gato).",
+    "Conserva solo las variables efectivas (como vivo/muerto).",
+    "Permite que las computadoras cuánticas simulen sistemas grandes y realistas."
+   ],
+   "headers": [
+    "Componente",
+    "Sistema del gato cuántico",
+    "Computadora cuántica"
+   ],
+   "rows": [
+    [
+     "Detalles microscópicos",
+     "10²⁷ cúbits atómicos en el gato",
+     "2^N cúbits físicos"
+    ],
+    [
+     "Objetivo",
+     "Determinar vivo / muerto",
+     "Predecir el resultado final / la medición"
+    ],
+    [
+     "Sin GR",
+     "Simular todo: demasiado difícil",
+     "Simular todos los cúbits: memoria exponencial"
+    ],
+    [
+     "Con GR",
+     "Rastrear solo “desintegrado o no” → “vivo/muerto”",
+     "Rastrear solo la estructura de entrelazamiento (p. ej., MPS)"
+    ],
+    [
+     "Salida del GR",
+     "Observable macroscópico (muerto/vivo)",
+     "Estado cuántico comprimido (MPS/QTT)"
+    ]
+   ]
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Renormalization (RG)",
+   "title": "Compressing amplitudes with tensor networks",
+   "bullets": [
+    "RG compresses these 2^N amplitudes by focusing on dominant correlations (the entanglement structure) and effective variables, instead of tracking every amplitude.",
+    "Using MPS (Matrix Product States) or TTN (Tree Tensor Networks): 2^N amplitudes → O(N·D²), where D is a small bond dimension."
+   ]
+  },
+  "es": {
+   "kicker": "Renormalización (GR)",
+   "title": "Comprimiendo amplitudes con redes tensoriales",
+   "bullets": [
+    "El GR comprime estas 2^N amplitudes enfocándose en las correlaciones dominantes (la estructura de entrelazamiento) y en variables efectivas, en lugar de rastrear cada amplitud.",
+    "Usando MPS (Estados de Producto Matricial) o TTN (Redes Tensoriales de Árbol): 2^N amplitudes → O(N·D²), donde D es una dimensión de enlace pequeña."
+   ]
+  }
+ },
+ {
+  "type": "quiz",
+  "en": {
+   "kicker": "RG filters out small contributions at large scales",
+   "title": "Quick check · ECG anomaly detection",
+   "question": "In training an AI to classify ECG anomalies, you use a moving-average window to reduce the number of training points. What principle is being applied here?",
+   "options": [
+    "Overfitting reduction",
+    "Renormalization",
+    "Signal convolution",
+    "Feature expansion",
+    "Bandwidth estimation"
+   ]
+  },
+  "es": {
+   "kicker": "El GR filtra las contribuciones pequeñas a gran escala",
+   "title": "Verificación rápida · Detección de anomalías en ECG",
+   "question": "Al entrenar una IA para clasificar anomalías en un ECG, usas una ventana de promedio móvil para reducir el número de puntos de entrenamiento. ¿Qué principio se aplica aquí?",
+   "options": [
+    "Reducción del sobreajuste",
+    "Renormalización",
+    "Convolución de señal",
+    "Expansión de características",
+    "Estimación de ancho de banda"
+   ]
+  }
+ },
+ {
+  "type": "reveal",
+  "en": {
+   "kicker": "RG filters out small contributions at large scales",
+   "title": "It's renormalization",
+   "body": "You simplify the system by grouping nearby values and removing small fluctuations — in other words, coarse-graining the data."
+  },
+  "es": {
+   "kicker": "El GR filtra las contribuciones pequeñas a gran escala",
+   "title": "Es renormalización",
+   "body": "Simplificas el sistema agrupando valores cercanos y eliminando las pequeñas fluctuaciones — es decir, aplicando coarse-graining (granulado grueso) a los datos."
+  }
+ },
+ {
+  "type": "coarse",
+  "en": {
+   "kicker": "RG filters out small contributions at large scales",
+   "title": "Coarse-graining, visualized",
+   "body": "Group nearby points, average them, and keep only the pattern that survives at larger scales."
+  },
+  "es": {
+   "kicker": "El GR filtra las contribuciones pequeñas a gran escala",
+   "title": "El coarse-graining, visualizado",
+   "body": "Agrupa los puntos cercanos, promédialos y conserva solo el patrón que sobrevive a mayor escala."
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "RG filters out small contributions at large scales",
+   "title": "Renormalization Group flow",
+   "body": [
+    "This process is RG flow: you remove short-distance (high-frequency) fluctuations and focus on long-range (low-frequency) behavior — exactly the idea behind RG in physics."
+   ]
+  },
+  "es": {
+   "kicker": "El GR filtra las contribuciones pequeñas a gran escala",
+   "title": "Flujo del grupo de renormalización",
+   "body": [
+    "Este proceso es un flujo de GR: eliminas las fluctuaciones de corto alcance (alta frecuencia) y te concentras en el comportamiento de largo alcance (baja frecuencia) — exactamente la idea detrás del GR en física."
+   ]
+  }
+ },
+ {
+  "type": "quiz",
+  "en": {
+   "kicker": "RG filters out small contributions at large scales",
+   "title": "Quick check · Solar microgrid data",
+   "question": "An engineer groups every 60 minutes of data into average values to focus on macro patterns in a solar microgrid. This approach is conceptually equivalent to:",
+   "options": [
+    "Runge–Kutta integration",
+    "Multi-level wavelet decomposition",
+    "Renormalization Group flow",
+    "Nyquist frequency sampling",
+    "Eigen decomposition of the covariance matrix"
+   ]
+  },
+  "es": {
+   "kicker": "El GR filtra las contribuciones pequeñas a gran escala",
+   "title": "Verificación rápida · Datos de una microrred solar",
+   "question": "Un ingeniero agrupa cada 60 minutos de datos en valores promedio para enfocarse en patrones macro de una microrred solar. Este enfoque es conceptualmente equivalente a:",
+   "options": [
+    "Integración de Runge–Kutta",
+    "Descomposición wavelet multinivel",
+    "Flujo del Grupo de Renormalización",
+    "Muestreo a la frecuencia de Nyquist",
+    "Descomposición en autovalores de la matriz de covarianza"
+   ]
+  }
+ },
+ {
+  "type": "quiz",
+  "en": {
+   "kicker": "RG filters out small contributions at large scales",
+   "title": "Quick check · Neural network optimization",
+   "question": "A method reduces redundant features layer by layer and keeps only dominant patterns at each scale. This strategy resembles:",
+   "options": [
+    "Newton–Raphson descent",
+    "Convolutional upsampling",
+    "Renormalization Group flow",
+    "Naive Bayes simplification",
+    "Dropout regularization"
+   ]
+  },
+  "es": {
+   "kicker": "El GR filtra las contribuciones pequeñas a gran escala",
+   "title": "Verificación rápida · Optimización de redes neuronales",
+   "question": "Un método reduce las características redundantes capa por capa y conserva solo los patrones dominantes en cada escala. Esta estrategia se parece a:",
+   "options": [
+    "Descenso de Newton–Raphson",
+    "Sobremuestreo convolucional",
+    "Flujo del Grupo de Renormalización",
+    "Simplificación de Naive Bayes",
+    "Regularización por dropout"
+   ]
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "RG filters out small contributions at large scales",
+   "title": "Semantic video compression, RG-style",
+   "bullets": [
+    "You want to compress video with an algorithm that looks beyond pixel-by-pixel compression, toward semantic-level compression.",
+    "Analyze frames in 16×16 blocks.",
+    "Extract features with a CNN.",
+    "Apply PCA or SVD to drop low-energy modes.",
+    "Track how quality degrades."
+   ],
+   "callout": "This hierarchical compression is conceptually like RG: remove noise at small scales, keep structure at larger ones."
+  },
+  "es": {
+   "kicker": "El GR filtra las contribuciones pequeñas a gran escala",
+   "title": "Compresión semántica de video, al estilo GR",
+   "bullets": [
+    "Quieres comprimir video con un algoritmo que va más allá de la compresión píxel por píxel, hacia una compresión a nivel semántico.",
+    "Analiza los cuadros en bloques de 16×16.",
+    "Extrae características con una CNN.",
+    "Aplica PCA o SVD para descartar los modos de baja energía.",
+    "Rastrea cómo se degrada la calidad."
+   ],
+   "callout": "Esta compresión jerárquica es conceptualmente parecida al GR: elimina el ruido a pequeña escala y conserva la estructura a mayor escala."
+  }
+ },
+ {
+  "type": "quiz",
+  "en": {
+   "kicker": "RG filters out small contributions at large scales",
+   "title": "Quick check · Sales and logistics",
+   "question": "Sales and Logistics are entangled: if Sales increases, Logistics is stressed. Instead of modeling all 1,000 sales routes, you focus on just 3 dominant logistics bottlenecks. This simplification is most similar to:",
+   "options": [
+    "Brute-force simulation",
+    "Deep learning",
+    "Renormalization filtering",
+    "Bayesian belief propagation"
+   ]
+  },
+  "es": {
+   "kicker": "El GR filtra las contribuciones pequeñas a gran escala",
+   "title": "Verificación rápida · Ventas y logística",
+   "question": "Ventas y Logística están entrelazadas: si Ventas aumenta, Logística se estresa. En vez de modelar las 1.000 rutas de venta, te enfocas solo en 3 cuellos de botella logísticos dominantes. Esta simplificación se parece más a:",
+   "options": [
+    "Simulación por fuerza bruta",
+    "Aprendizaje profundo",
+    "Filtrado por renormalización",
+    "Propagación de creencias bayesiana"
+   ]
+  }
+ },
+ {
+  "type": "quiz",
+  "en": {
+   "kicker": "RG filters out small contributions at large scales",
+   "title": "Quick check · Consumer preference drift",
+   "formula": [
+    "|ψ⟩ = α|buy⟩ + β|not buy⟩"
+   ],
+   "question": "You model each consumer as a qubit. Over time, preferences shift due to recommendation influence (entanglement with the system state). Applying RG helps you:",
+   "options": [
+    "Increase entanglement",
+    "Collapse the user state faster",
+    "Track only dominant influences like price, emotion, and timing",
+    "Represent each click as a qubit gate"
+   ]
+  },
+  "es": {
+   "kicker": "El GR filtra las contribuciones pequeñas a gran escala",
+   "title": "Verificación rápida · Deriva de preferencias del consumidor",
+   "formula": [
+    "|ψ⟩ = α|comprar⟩ + β|no comprar⟩"
+   ],
+   "question": "Modelas a cada consumidor como un cúbit. Con el tiempo, las preferencias cambian por la influencia de las recomendaciones (entrelazamiento con el estado del sistema). Aplicar el GR te ayuda a:",
+   "options": [
+    "Aumentar el entrelazamiento",
+    "Colapsar el estado del usuario más rápido",
+    "Rastrear solo las influencias dominantes, como precio, emoción y momento",
+    "Representar cada clic como una puerta cuántica"
+   ]
+  }
+ },
+ {
+  "type": "quiz",
+  "en": {
+   "kicker": "RG filters out small contributions at large scales",
+   "title": "Quick check · Marketing at scale",
+   "question": "A marketing AI tracks 100 million customers, each with 1,000 variables. An RG-inspired model groups users by emergent patterns and compresses the input size. This approach:",
+   "options": [
+    "Makes the model slower but more detailed",
+    "Causes information loss at the local level",
+    "Reduces overfitting and enhances generalization",
+    "Increases the number of training parameters"
+   ]
+  },
+  "es": {
+   "kicker": "El GR filtra las contribuciones pequeñas a gran escala",
+   "title": "Verificación rápida · Marketing a gran escala",
+   "question": "Una IA de marketing rastrea a 100 millones de clientes, cada uno con 1.000 variables. Un modelo inspirado en el GR agrupa a los usuarios por patrones emergentes y comprime el tamaño de entrada. Este enfoque:",
+   "options": [
+    "Hace el modelo más lento pero más detallado",
+    "Provoca pérdida de información a nivel local",
+    "Reduce el sobreajuste y mejora la generalización",
+    "Aumenta el número de parámetros de entrenamiento"
+   ]
+  }
+ },
+ {
+  "type": "quote",
+  "en": {
+   "kicker": "Analogy",
+   "title": "Why physics had to zoom out",
+   "body": "Imagine building an AI system that has to look at every detail — every pixel, every variable, every sensor input. At some point the system gets overwhelmed. You need a way to zoom out, focus on what matters, and ignore the rest. That's exactly what physicists faced in the 1940s, when quantum field theory started giving infinite answers. They invented something radical: renormalization — a way to zoom out without losing meaning. Today we'll see how that same logic can make quantum AI smarter, faster, and more scalable."
+  },
+  "es": {
+   "kicker": "Analogía",
+   "title": "Por qué la física tuvo que alejar la mirada",
+   "body": "Imagina construir un sistema de IA que tiene que fijarse en cada detalle: cada píxel, cada variable, cada entrada de sensor. En algún momento el sistema se ve abrumado. Necesitas una forma de alejar la mirada, enfocarte en lo que importa e ignorar el resto. Eso es exactamente lo que enfrentaron los físicos en la década de 1940, cuando la teoría cuántica de campos empezó a dar respuestas infinitas. Inventaron algo radical: la renormalización — una forma de alejar la mirada sin perder el sentido. Hoy veremos cómo esa misma lógica puede hacer que la IA cuántica sea más inteligente, más rápida y más escalable."
+  }
+ },
+ {
+  "type": "quote",
+  "en": {
+   "kicker": "Analogy",
+   "title": "Too much noise, too little clarity",
+   "body": "There's too much information, too much noise, too much happening — it becomes hard, or impossible, to find what's actually important. We need shortcuts: renormalization, compression, zooming out, or filtering."
+  },
+  "es": {
+   "kicker": "Analogía",
+   "title": "Demasiado ruido, muy poca claridad",
+   "body": "Hay demasiada información, demasiado ruido, demasiado sucediendo a la vez — se vuelve difícil, o imposible, encontrar lo que realmente importa. Necesitamos atajos: renormalización, compresión, alejar la mirada o filtrar."
+  }
+ },
+ {
+  "type": "diagram",
+  "en": {
+   "kicker": "Analogy",
+   "title": "From temple to tensor network",
+   "steps": [
+    "Ancient temple layout",
+    "Mandala layout",
+    "Tensor network"
+   ],
+   "body": "A temple has layers of complexity, but its core idea is simple: from chaos to clarity. Its geometric plan uses symmetric, layered patterns — a mandala that filters out noise and creates ordered space. Like a map that compresses a temple's complexity into something understandable, this is a lot like renormalization. A neural network's layered nodes mimic how AI learns patterns, and a tensor network is a structured way to shrink complex quantum systems for quantum AI.",
+   "callout": "These structures also filter, compress, and zoom out — just like a temple's layout, or renormalization in physics."
+  },
+  "es": {
+   "kicker": "Analogía",
+   "title": "Del templo a la red tensorial",
+   "steps": [
+    "Planta de un templo antiguo",
+    "Patrón de mandala",
+    "Red tensorial"
+   ],
+   "body": "Un templo tiene capas de complejidad, pero su idea central es simple: del caos a la claridad. Su plano geométrico usa patrones simétricos y por capas — un mandala que filtra el ruido y crea un espacio ordenado. Como un mapa que comprime la complejidad de un templo en algo comprensible, esto se parece mucho a la renormalización. Los nodos por capas de una red neuronal imitan cómo la IA aprende patrones, y una red tensorial es una forma estructurada de reducir sistemas cuánticos complejos para la IA cuántica.",
+   "callout": "Estas estructuras también filtran, comprimen y alejan la mirada — igual que la planta de un templo, o la renormalización en física."
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Analogy",
+   "title": "Forest conservation, seen through renormalization",
+   "icon": "🌳🦌🐅🛰️",
+   "bullets": [
+    "Trying to conserve a forest by tracking every single leaf is overwhelming.",
+    "But when you zoom out, spot patterns, and focus on the right scales, you protect the whole system — smartly, efficiently, and meaningfully.",
+    "That's renormalization. In forests, in physics, or in AI."
+   ]
+  },
+  "es": {
+   "kicker": "Analogía",
+   "title": "La conservación de bosques, vista a través de la renormalización",
+   "icon": "🌳🦌🐅🛰️",
+   "bullets": [
+    "Tratar de conservar un bosque rastreando cada hoja es abrumador.",
+    "Pero cuando alejas la mirada, detectas patrones y te enfocas en las escalas correctas, proteges todo el sistema — de forma inteligente, eficiente y significativa.",
+    "Eso es renormalización. En los bosques, en la física o en la IA."
+   ]
+  }
+ },
+ {
+  "type": "quiz",
+  "en": {
+   "kicker": "Analogy",
+   "title": "Quick check · Rainforest monitoring",
+   "question": "Conservationists, overwhelmed by data from millions of trees, species, and climate sensors, adopt a “zoom-out” strategy focused on large-scale indicators: zone classification, monitoring of selected species, and aggregate CO₂ absorption. Which best describes this approach?",
+   "options": [
+    "Linear regression modeling",
+    "Renormalization or dimensionality reduction",
+    "Deep feature amplification",
+    "Localized biodiversity exhaustion",
+    "Random sampling without replacement"
+   ]
+  },
+  "es": {
+   "kicker": "Analogía",
+   "title": "Verificación rápida · Monitoreo de selva tropical",
+   "question": "Abrumados por datos de millones de árboles, especies y sensores climáticos, unos conservacionistas adoptan una estrategia de “alejar la mirada” centrada en indicadores a gran escala: clasificación de zonas, monitoreo de especies seleccionadas y absorción agregada de CO₂. ¿Cuál describe mejor este enfoque?",
+   "options": [
+    "Modelado por regresión lineal",
+    "Renormalización o reducción de dimensionalidad",
+    "Amplificación profunda de características",
+    "Agotamiento localizado de biodiversidad",
+    "Muestreo aleatorio sin reemplazo"
+   ]
+  }
+ },
+ {
+  "type": "compare",
+  "en": {
+   "kicker": "Difference",
+   "title": "Classical data science vs. renormalization-inspired thinking",
+   "colA_title": "Classical data science",
+   "colA": [
+    "Use all available data.",
+    "Build large models with hundreds of variables.",
+    "Try to find patterns from the full dataset."
+   ],
+   "colB_title": "Renormalization-inspired approach",
+   "colB": [
+    "Inspired by physics: discard small-scale fluctuations, focus on effective behavior.",
+    "Emphasizes scaling, hierarchy, and emergent patterns.",
+    "Uses only the most relevant variables, at the right scale."
+   ]
+  },
+  "es": {
+   "kicker": "Diferencia",
+   "title": "Ciencia de datos clásica vs. pensamiento inspirado en la renormalización",
+   "colA_title": "Ciencia de datos clásica",
+   "colA": [
+    "Usar todos los datos disponibles.",
+    "Construir modelos grandes con cientos de variables.",
+    "Buscar patrones en el conjunto de datos completo."
+   ],
+   "colB_title": "Enfoque inspirado en la renormalización",
+   "colB": [
+    "Inspirado en la física: descarta las fluctuaciones a pequeña escala, se centra en el comportamiento efectivo.",
+    "Enfatiza la escala, la jerarquía y los patrones emergentes.",
+    "Usa solo las variables más relevantes, en la escala correcta."
+   ]
+  }
+ },
+ {
+  "type": "table",
+  "en": {
+   "kicker": "Difference",
+   "title": "Classical vs. renormalization approach, side by side",
+   "headers": [
+    "Problem",
+    "Classical approach",
+    "Renormalization approach"
+   ],
+   "rows": [
+    [
+     "Curse of dimensionality",
+     "Needs exponentially more data",
+     "Works with fewer, scaled variables"
+    ],
+    [
+     "Overfitting risk",
+     "High (more features → more noise fit)",
+     "Low (only core structure remains)"
+    ],
+    [
+     "Model complexity",
+     "O(n²) or O(n³) in large systems",
+     "O(log n), or constant-time models"
+    ],
+    [
+     "Entropy & information",
+     "High entropy, low signal-to-noise",
+     "Lower entropy, higher information density"
+    ],
+    [
+     "Scalability",
+     "Poor — bottlenecked",
+     "Excellent — scales to large systems"
+    ]
+   ]
+  },
+  "es": {
+   "kicker": "Diferencia",
+   "title": "Enfoque clásico vs. de renormalización, lado a lado",
+   "headers": [
+    "Problema",
+    "Enfoque clásico",
+    "Enfoque de renormalización"
+   ],
+   "rows": [
+    [
+     "Maldición de la dimensionalidad",
+     "Necesita datos exponencialmente más",
+     "Funciona con menos variables, a la escala correcta"
+    ],
+    [
+     "Riesgo de sobreajuste",
+     "Alto (más características → más ruido ajustado)",
+     "Bajo (solo queda la estructura central)"
+    ],
+    [
+     "Complejidad del modelo",
+     "O(n²) u O(n³) en sistemas grandes",
+     "O(log n), o modelos de tiempo constante"
+    ],
+    [
+     "Entropía e información",
+     "Entropía alta, señal-ruido baja",
+     "Entropía menor, mayor densidad de información"
+    ],
+    [
+     "Escalabilidad",
+     "Pobre — con cuellos de botella",
+     "Excelente — escala a sistemas grandes"
+    ]
+   ]
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Difference",
+   "title": "Renormalization as PCA, mathematically",
+   "bullets": [
+    "Mathematically, renormalization acts like Principal Component Analysis (PCA) or Fourier filtering — projecting data onto the basis states that matter most.",
+    "In classical ML: 100 variables → model size = O(100²) = 10,000.",
+    "In renormalized quantum ML: use entangled states, retain only low-rank tensor structure.",
+    "Huge savings in both compute and noise reduction."
+   ]
+  },
+  "es": {
+   "kicker": "Diferencia",
+   "title": "La renormalización como PCA, matemáticamente",
+   "bullets": [
+    "Matemáticamente, la renormalización actúa como el Análisis de Componentes Principales (PCA) o el filtrado de Fourier — proyectando los datos sobre los estados base que más importan.",
+    "En ML clásico: 100 variables → tamaño del modelo = O(100²) = 10.000.",
+    "En ML cuántico renormalizado: se usan estados entrelazados, conservando solo la estructura tensorial de bajo rango.",
+    "Un ahorro enorme, tanto en cómputo como en reducción de ruido."
+   ]
+  }
+ },
+ {
+  "type": "stat",
+  "en": {
+   "kicker": "Difference",
+   "title": "What each approach keeps — and discards",
+   "body": "Classical data science memorizes the noise. Renormalization finds the structure — saving millions of computations while retaining only what actually governs the system.",
+   "stats": [
+    {
+     "label": "Raw system",
+     "value": "1,000 variables",
+     "sub": "complexity ~ O(1000²) = 1,000,000 operations"
+    },
+    {
+     "label": "After renormalization",
+     "value": "3–5 effective variables",
+     "sub": "O(5²) = 25 operations"
+    }
+   ]
+  },
+  "es": {
+   "kicker": "Diferencia",
+   "title": "Qué conserva — y qué descarta — cada enfoque",
+   "body": "La ciencia de datos clásica memoriza el ruido. La renormalización encuentra la estructura — ahorrando millones de cálculos y conservando solo lo que realmente gobierna el sistema.",
+   "stats": [
+    {
+     "label": "Sistema en bruto",
+     "value": "1.000 variables",
+     "sub": "complejidad ~ O(1000²) = 1.000.000 operaciones"
+    },
+    {
+     "label": "Tras la renormalización",
+     "value": "3–5 variables efectivas",
+     "sub": "O(5²) = 25 operaciones"
+    }
+   ]
+  }
+ },
+ {
+  "type": "table",
+  "en": {
+   "kicker": "Difference",
+   "title": "Same idea, quantified",
+   "headers": [
+    "Method",
+    "Uses all variables?",
+    "Overfits?",
+    "Generalizes?",
+    "Computational cost"
+   ],
+   "rows": [
+    [
+     "Classical data science",
+     "Yes",
+     "Often",
+     "Weak",
+     "O(n²) or worse"
+    ],
+    [
+     "Renormalization logic",
+     "No — filters noise",
+     "Robust",
+     "Strong",
+     "O(log n) or low"
+    ]
+   ],
+   "note": "Raw system: 1,000 variables → ~O(1000²) = 1,000,000 operations. After renormalization: 3–5 effective variables → O(5²) = 25 operations. That's roughly a 40,000× compression, while the governing structure is retained."
+  },
+  "es": {
+   "kicker": "Diferencia",
+   "title": "La misma idea, cuantificada",
+   "headers": [
+    "Método",
+    "¿Usa todas las variables?",
+    "¿Sobreajusta?",
+    "¿Generaliza?",
+    "Costo computacional"
+   ],
+   "rows": [
+    [
+     "Ciencia de datos clásica",
+     "Sí",
+     "A menudo",
+     "Débil",
+     "O(n²) o peor"
+    ],
+    [
+     "Lógica de renormalización",
+     "No — filtra el ruido",
+     "Robusto",
+     "Fuerte",
+     "O(log n) o bajo"
+    ]
+   ],
+   "note": "Sistema en bruto: 1.000 variables → ~O(1000²) = 1.000.000 operaciones. Tras la renormalización: 3–5 variables efectivas → O(5²) = 25 operaciones. Eso es aproximadamente una compresión de 40.000×, conservando la estructura que gobierna el sistema."
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Case study",
+   "title": "Case study: modeling tree height",
+   "bullets": [
+    "Suppose you're modeling tree height across a forest.",
+    "You collect data from 10,000 trees.",
+    "Tree height depends on soil nutrients (X₁), sunlight (X₂), and rainfall (X₃)…",
+    "…plus 997 other sensor variables, X₄ through X₁₀₀₀."
+   ],
+   "callout": "Only X₁–X₃ actually matter. The rest is noise or irrelevant."
+  },
+  "es": {
+   "kicker": "Caso de estudio",
+   "title": "Caso de estudio: modelar la altura de los árboles",
+   "bullets": [
+    "Supongamos que estás modelando la altura de los árboles en un bosque.",
+    "Recolectas datos de 10.000 árboles.",
+    "La altura depende de los nutrientes del suelo (X₁), la luz solar (X₂) y la lluvia (X₃)…",
+    "…más otras 997 variables de sensores, de X₄ a X₁₀₀₀."
+   ],
+   "callout": "Solo X₁–X₃ realmente importan. El resto es ruido o irrelevante."
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Classical approach",
+   "title": "The classical data science approach",
+   "formula": [
+    "TreeHeight = f(X₁, X₂, …, X₁₀₀₀) + ε"
+   ],
+   "bullets": [
+    "The model tries to use all 1,000 features.",
+    "It may fit to noise in X₄–X₁₀₀₀.",
+    "Needs O(n²) to O(n³) computations, where n = 1,000 features.",
+    "Result: it overfits, and fails to generalize."
+   ]
+  },
+  "es": {
+   "kicker": "Enfoque clásico",
+   "title": "El enfoque clásico de ciencia de datos",
+   "formula": [
+    "AlturaÁrbol = f(X₁, X₂, …, X₁₀₀₀) + ε"
+   ],
+   "bullets": [
+    "El modelo intenta usar las 1.000 características.",
+    "Puede ajustarse al ruido en X₄–X₁₀₀₀.",
+    "Necesita entre O(n²) y O(n³) cálculos, con n = 1.000 características.",
+    "Resultado: sobreajusta y no logra generalizar."
+   ]
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Renormalization approach",
+   "title": "The renormalization-inspired strategy",
+   "bullets": [
+    "Step 1 — Zoom out / reduce dimensions: use PCA, Fourier analysis, or physics intuition to identify just the 3 governing variables, or combine them into 1–2 effective variables: Z₁ = 0.5X₁ + 0.3X₂ + 0.2X₃.",
+    "Step 2 — Model only the effective behavior: TreeHeight ≈ g(Z₁)."
+   ],
+   "callout": "Computation: O(3²) = 9 operations, vs. O(1000²) = 1,000,000+. No overfitting, and better generalization across zones and regions."
+  },
+  "es": {
+   "kicker": "Enfoque de renormalización",
+   "title": "La estrategia inspirada en la renormalización",
+   "bullets": [
+    "Paso 1 — Alejar la mirada / reducir dimensiones: usa PCA, análisis de Fourier o intuición física para identificar solo las 3 variables que gobiernan el sistema, o combínalas en 1–2 variables efectivas: Z₁ = 0,5X₁ + 0,3X₂ + 0,2X₃.",
+    "Paso 2 — Modela solo el comportamiento efectivo: AlturaÁrbol ≈ g(Z₁)."
+   ],
+   "callout": "Cálculo: O(3²) = 9 operaciones, frente a O(1000²) = 1.000.000+. Sin sobreajuste, y mejor generalización entre zonas y regiones."
+  }
+ },
+ {
+  "type": "compare",
+  "en": {
+   "kicker": "Why the difference",
+   "title": "Why classical memorizes noise, and RG finds structure",
+   "colA_title": "Why classical ML memorizes noise",
+   "colA": [
+    "Classical ML treats all input dimensions equally.",
+    "If many are irrelevant or weakly correlated, it still builds complex decision surfaces using them.",
+    "This “fits the training data” but learns patterns that don't generalize — it memorizes noise."
+   ],
+   "colB_title": "Why renormalization finds structure",
+   "colB": [
+    "It assumes nature works at different scales.",
+    "Instead of tracking every detail, it asks: what combination of inputs really controls the system?",
+    "It projects data onto meaningful, low-dimensional subspaces — as in PCA, RG flow, and tensor networks."
+   ]
+  },
+  "es": {
+   "kicker": "Por qué la diferencia",
+   "title": "Por qué lo clásico memoriza el ruido, y el GR encuentra la estructura",
+   "colA_title": "Por qué el ML clásico memoriza el ruido",
+   "colA": [
+    "El ML clásico trata todas las dimensiones de entrada por igual.",
+    "Si muchas son irrelevantes o están débilmente correlacionadas, igual construye superficies de decisión complejas usándolas.",
+    "Esto “se ajusta a los datos de entrenamiento”, pero aprende patrones que no generalizan — memoriza el ruido."
+   ],
+   "colB_title": "Por qué la renormalización encuentra la estructura",
+   "colB": [
+    "Asume que la naturaleza funciona en distintas escalas.",
+    "En vez de rastrear cada detalle, pregunta: ¿qué combinación de entradas realmente controla el sistema?",
+    "Proyecta los datos en subespacios significativos y de baja dimensión — como en PCA, el flujo de GR y las redes tensoriales."
+   ]
+  }
+ },
+ {
+  "type": "quiz",
+  "en": {
+   "kicker": "Percentage reduction",
+   "title": "Quick check · Percentage reduction",
+   "question": "A machine learning system originally uses 1,000 input variables, giving a complexity of O(1000²). After a renormalization-inspired reduction, it uses only 5 effective variables. What's the approximate percentage reduction in operations?",
+   "options": [
+    "50%",
+    "90%",
+    "99.5%",
+    "99.9975%",
+    "100%"
+   ]
+  },
+  "es": {
+   "kicker": "Porcentaje de reducción",
+   "title": "Verificación rápida · Porcentaje de reducción",
+   "question": "Un sistema de aprendizaje automático usa originalmente 1.000 variables de entrada, con una complejidad de O(1000²). Tras una reducción inspirada en la renormalización, usa solo 5 variables efectivas. ¿Cuál es la reducción porcentual aproximada en operaciones?",
+   "options": [
+    "50%",
+    "90%",
+    "99.5%",
+    "99,9975%",
+    "100%"
+   ]
+  }
+ },
+ {
+  "type": "reveal",
+  "en": {
+   "kicker": "Percentage reduction",
+   "title": "Working the numbers",
+   "formula": [
+    "Before: 1000² = 1,000,000 operations",
+    "After: 5² = 25 operations",
+    "Reduction = (1,000,000 − 25) / 1,000,000 = 0.999975 = 99.9975%"
+   ],
+   "body": "That's the answer: 99.9975%."
+  },
+  "es": {
+   "kicker": "Porcentaje de reducción",
+   "title": "Haciendo el cálculo",
+   "formula": [
+    "Antes: 1000² = 1.000.000 operaciones",
+    "Después: 5² = 25 operaciones",
+    "Reducción = (1.000.000 − 25) / 1.000.000 = 0,999975 = 99,9975%"
+   ],
+   "body": "Esa es la respuesta: 99,9975%."
+  }
+ },
+ {
+  "type": "reveal_quiz",
+  "en": {
+   "kicker": "Analytical Reasoning",
+   "title": "Analytical reasoning: predicting tree height",
+   "question": "Researchers studying a rainforest discover that tree height can be predicted effectively using just three aggregate variables: rainfall, sunlight, and soil nutrients. Which best explains their modeling decision?",
+   "options": [
+    "They're avoiding overfitting by applying dropout",
+    "They're using k-means clustering to reduce the sample size",
+    "They're applying renormalization to extract effective structure",
+    "They're removing bias using L1 regularization",
+    "They're improving interpretability using random forests"
+   ],
+   "answer_index": 2,
+   "answer_text": "They are applying renormalization to extract effective structure."
+  },
+  "es": {
+   "kicker": "Razonamiento analítico",
+   "title": "Razonamiento analítico: predecir la altura de los árboles",
+   "question": "Investigadores que estudian una selva tropical descubren que la altura de los árboles puede predecirse eficazmente usando solo tres variables agregadas: lluvia, luz solar y nutrientes del suelo. ¿Cuál explica mejor esta decisión de modelado?",
+   "options": [
+    "Están evitando el sobreajuste aplicando dropout",
+    "Están usando k-means para reducir el tamaño de la muestra",
+    "Están aplicando renormalización para extraer la estructura efectiva",
+    "Están eliminando el sesgo con regularización L1",
+    "Están mejorando la interpretabilidad con bosques aleatorios"
+   ],
+   "answer_index": 2,
+   "answer_text": "Están aplicando renormalización para extraer la estructura efectiva."
+  }
+ },
+ {
+  "type": "quiz",
+  "en": {
+   "kicker": "Mathematical Reasoning",
+   "title": "Mathematical reasoning: cutting cost by 10,000×",
+   "question": "Let the computational cost of a model be proportional to the square of the number of variables: Cost = O(n²). Which variable reduction cuts the cost by a factor greater than 10,000?",
+   "options": [
+    "From 500 variables to 100",
+    "From 1,000 variables to 50",
+    "From 1,000 variables to 10",
+    "From 1,000 variables to 5",
+    "From 200 variables to 20"
+   ]
+  },
+  "es": {
+   "kicker": "Razonamiento matemático",
+   "title": "Razonamiento matemático: reducir el costo 10.000 veces",
+   "question": "Sea el costo computacional de un modelo proporcional al cuadrado del número de variables: Costo = O(n²). ¿Qué reducción de variables recorta el costo en un factor mayor a 10.000?",
+   "options": [
+    "De 500 variables a 100",
+    "De 1.000 variables a 50",
+    "De 1.000 variables a 10",
+    "De 1.000 variables a 5",
+    "De 200 variables a 20"
+   ]
+  }
+ },
+ {
+  "type": "reveal",
+  "en": {
+   "kicker": "Mathematical Reasoning",
+   "title": "Working the numbers",
+   "formula": [
+    "1000² / 5² = 1,000,000 / 25 = 40,000 > 10,000"
+   ],
+   "body": "Going from 1,000 variables to 5 clears the 10,000× bar."
+  },
+  "es": {
+   "kicker": "Razonamiento matemático",
+   "title": "Haciendo el cálculo",
+   "formula": [
+    "1000² / 5² = 1.000.000 / 25 = 40.000 > 10.000"
+   ],
+   "body": "Pasar de 1.000 variables a 5 supera el umbral de 10.000×."
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Computational Engineering",
+   "title": "Heat simulation in a complex material",
+   "body": [
+    "An engineer simulates heat diffusion in a composite material with a 1000×1000 grid — 1 million nodes.",
+    "Each node carries 10 properties (temperature, conductivity, pressure, etc.), governed by equations like the Finite Element Method."
+   ],
+   "formula": [
+    "Q = −k∇T"
+   ],
+   "bullets": [
+    "The classical approach tries to simulate every node and every variable.",
+    "Complexity grows as O(n²) or worse.",
+    "It requires a high-performance computing (HPC) cluster.",
+    "Expensive, slow, and hard to interpret."
+   ]
+  },
+  "es": {
+   "kicker": "Ingeniería computacional",
+   "title": "Simulación de calor en un material complejo",
+   "body": [
+    "Un ingeniero simula la difusión de calor en un material compuesto con una malla de 1000×1000 — 1 millón de nodos.",
+    "Cada nodo tiene 10 propiedades (temperatura, conductividad, presión, etc.), gobernadas por ecuaciones como el Método de Elementos Finitos."
+   ],
+   "formula": [
+    "Q = −k∇T"
+   ],
+   "bullets": [
+    "El enfoque clásico intenta simular cada nodo y cada variable.",
+    "La complejidad crece como O(n²) o peor.",
+    "Requiere un clúster de computación de alto rendimiento (HPC).",
+    "Costoso, lento y difícil de interpretar."
+   ]
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Computational Engineering",
+   "title": "Renormalization-inspired engineering",
+   "bullets": [
+    "Instead of simulating every node, group regions with similar behavior (coarse-graining).",
+    "Track macro-zones — regions with similar temperature gradients.",
+    "Extract an effective conductivity k_eff and macro heat-flow Q_eff.",
+    "Use multi-scale modeling or homogenization."
+   ],
+   "formula": [
+    "Q_eff = −k_eff ∇T_macro"
+   ],
+   "callout": "A 10×10 coarse grid instead of 1000×1000 retains the key behavior — simulation cost drops from O(10⁶) to O(10²)."
+  },
+  "es": {
+   "kicker": "Ingeniería computacional",
+   "title": "Ingeniería inspirada en la renormalización",
+   "bullets": [
+    "En lugar de simular cada nodo, agrupa regiones con comportamiento similar (coarse-graining).",
+    "Rastrea macro-zonas — regiones con gradientes de temperatura similares.",
+    "Extrae una conductividad efectiva k_ef y un flujo de calor macro Q_ef.",
+    "Usa modelado multiescala u homogeneización."
+   ],
+   "formula": [
+    "Q_ef = −k_ef ∇T_macro"
+   ],
+   "callout": "Una malla gruesa de 10×10 en lugar de 1000×1000 conserva el comportamiento clave — el costo de simulación baja de O(10⁶) a O(10²)."
+  }
+ },
+ {
+  "type": "table",
+  "en": {
+   "kicker": "Computational Engineering",
+   "title": "Classical FEM/CFD vs. renormalization-inspired engineering",
+   "headers": [
+    "Feature",
+    "Classical FEM/CFD",
+    "Renormalization-inspired"
+   ],
+   "rows": [
+    [
+     "Nodes simulated",
+     "1,000,000",
+     "100–200 macro-nodes"
+    ],
+    [
+     "Complexity",
+     "O(n²)",
+     "O(k²), where k ≪ n"
+    ],
+    [
+     "Time to solve",
+     "Hours or days",
+     "Minutes"
+    ],
+    [
+     "Interpretable behavior",
+     "Hard",
+     "Clear macro-laws"
+    ],
+    [
+     "Adaptability",
+     "Poor",
+     "Multi-scale ready"
+    ]
+   ]
+  },
+  "es": {
+   "kicker": "Ingeniería computacional",
+   "title": "FEM/CFD clásico vs. ingeniería inspirada en la renormalización",
+   "headers": [
+    "Característica",
+    "FEM/CFD clásico",
+    "Inspirado en la renormalización"
+   ],
+   "rows": [
+    [
+     "Nodos simulados",
+     "1.000.000",
+     "100–200 macro-nodos"
+    ],
+    [
+     "Complejidad",
+     "O(n²)",
+     "O(k²), con k ≪ n"
+    ],
+    [
+     "Tiempo de solución",
+     "Horas o días",
+     "Minutos"
+    ],
+    [
+     "Comportamiento interpretable",
+     "Difícil",
+     "Leyes macro claras"
+    ],
+    [
+     "Adaptabilidad",
+     "Pobre",
+     "Lista para multiescala"
+    ]
+   ]
+  }
+ },
+ {
+  "type": "quiz",
+  "en": {
+   "kicker": "Renormalization-Based Engineering",
+   "title": "Quick check · 1,000,000 nodes to 100",
+   "question": "An engineer models heat flow using 1 million nodes, then switches to a renormalization-inspired model with only 100 macro-nodes. Assuming cost is proportional to the square of the node count, what's the approximate reduction in operations?",
+   "options": [
+    "10×",
+    "100×",
+    "1,000×",
+    "10,000×",
+    "1,000,000×"
+   ]
+  },
+  "es": {
+   "kicker": "Ingeniería basada en la renormalización",
+   "title": "Verificación rápida · De 1.000.000 de nodos a 100",
+   "question": "Un ingeniero modela el flujo de calor con 1 millón de nodos y luego cambia a un modelo inspirado en la renormalización con solo 100 macro-nodos. Suponiendo que el costo es proporcional al cuadrado del número de nodos, ¿cuál es la reducción aproximada en operaciones?",
+   "options": [
+    "10×",
+    "100×",
+    "1.000×",
+    "10.000×",
+    "1.000.000×"
+   ]
+  }
+ },
+ {
+  "type": "quote",
+  "en": {
+   "kicker": "Computational Engineering",
+   "title": "From microscale chaos to macroscale insight",
+   "body": "In computational engineering, renormalization helps simplify large simulations by identifying effective parameters at the right scale. It lets engineers move from microscale chaos to macroscale insight — with massive computational savings."
+  },
+  "es": {
+   "kicker": "Ingeniería computacional",
+   "title": "Del caos microscópico al conocimiento macroscópico",
+   "body": "En ingeniería computacional, la renormalización ayuda a simplificar grandes simulaciones al identificar parámetros efectivos en la escala correcta. Permite a los ingenieros pasar del caos microscópico al conocimiento macroscópico — con un ahorro computacional enorme."
+  }
+ },
+ {
+  "type": "quiz",
+  "en": {
+   "kicker": "Renormalization-Based Engineering",
+   "title": "Quick check · Sepsis detection",
+   "question": "A hospital AI trained to detect early sepsis initially uses 300 signals per patient, then compresses them into 5 latent variables while retaining 97% of predictive power. This resembles:",
+   "options": [
+    "Linear regression",
+    "Decision trees",
+    "Renormalization group method",
+    "t-SNE visualization",
+    "Logistic regression"
+   ],
+   "note": "Renormalization isn't just for quantum physics — it can anchor a next-generation medical startup that handles big health data, focuses on emergent patterns, and delivers interpretable, scalable AI."
+  },
+  "es": {
+   "kicker": "Ingeniería basada en la renormalización",
+   "title": "Verificación rápida · Detección de sepsis",
+   "question": "Una IA hospitalaria entrenada para detectar sepsis temprana usa inicialmente 300 señales por paciente y luego las comprime en 5 variables latentes, conservando el 97 % del poder predictivo. Esto se parece a:",
+   "options": [
+    "Regresión lineal",
+    "Árboles de decisión",
+    "Método del grupo de renormalización",
+    "Visualización t-SNE",
+    "Regresión logística"
+   ],
+   "note": "La renormalización no es solo para la física cuántica — puede ser la base de una startup médica de nueva generación que maneje grandes datos de salud, se enfoque en patrones emergentes y entregue IA interpretable y escalable."
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Renormalization-Based Engineering",
+   "title": "Supply-chain reaction modeling",
+   "bullets": [
+    "Factories, logistics hubs, and retailers behave like oscillators.",
+    "A delay or disruption at one node affects the entire chain (the bullwhip effect).",
+    "Structural health-monitoring (SHM) models help predict inventory oscillation and model resilience."
+   ],
+   "callout": "Application: Amazon, Walmart, and Tesla's EV supply-chain optimization."
+  },
+  "es": {
+   "kicker": "Ingeniería basada en la renormalización",
+   "title": "Modelado de reacción en cadena de suministro",
+   "bullets": [
+    "Fábricas, centros logísticos y minoristas se comportan como osciladores.",
+    "Un retraso o interrupción en un nodo afecta a toda la cadena (el efecto látigo).",
+    "Los modelos de monitoreo de salud estructural (SHM) ayudan a predecir la oscilación del inventario y modelar la resiliencia."
+   ],
+   "callout": "Aplicación: la optimización de la cadena de suministro de Amazon, Walmart y los vehículos eléctricos de Tesla."
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Renormalization-Based Engineering",
+   "title": "Amazon: supply-chain oscillations and demand propagation",
+   "bullets": [
+    "Uses system-dynamics and coupled models to manage inventory across fulfillment centers, delays and ripples in logistics, and customer demand response over time.",
+    "Equivalent to oscillator chains: a disruption at one node (a delivery center) propagates outward."
+   ],
+   "callout": "Renormalization logic aggregates demand by region or category to avoid computational overload."
+  },
+  "es": {
+   "kicker": "Ingeniería basada en la renormalización",
+   "title": "Amazon: oscilaciones de la cadena de suministro y propagación de la demanda",
+   "bullets": [
+    "Usa dinámica de sistemas y modelos acoplados para gestionar el inventario entre centros de distribución, los retrasos y efectos en cadena en la logística, y la respuesta de la demanda del cliente en el tiempo.",
+    "Equivalente a cadenas de osciladores: una interrupción en un nodo (un centro de entrega) se propaga hacia afuera."
+   ],
+   "callout": "La lógica de renormalización agrega la demanda por región o categoría para evitar la sobrecarga computacional."
+  }
+ },
+ {
+  "type": "table",
+  "en": {
+   "kicker": "Renormalization-Based Engineering",
+   "title": "Who's already using this logic",
+   "headers": [
+    "Company",
+    "What they do"
+   ],
+   "rows": [
+    [
+     "Google DeepMind",
+     "Uses renormalization-group theory for neural-net scaling (e.g., AlphaFold, AlphaGo)."
+    ],
+    [
+     "IBM Quantum",
+     "Uses renormalization in tensor networks for quantum-circuit compression."
+    ],
+    [
+     "Palantir",
+     "Aggregates low-level data into macro patterns — the same logic as renormalization."
+    ],
+    [
+     "Airbnb",
+     "Uses zone-level market models to simplify demand/supply planning."
+    ]
+   ]
+  },
+  "es": {
+   "kicker": "Ingeniería basada en la renormalización",
+   "title": "Quiénes ya usan esta lógica",
+   "headers": [
+    "Empresa",
+    "Qué hace"
+   ],
+   "rows": [
+    [
+     "Google DeepMind",
+     "Usa la teoría del grupo de renormalización para escalar redes neuronales (p. ej., AlphaFold, AlphaGo)."
+    ],
+    [
+     "IBM Quantum",
+     "Usa la renormalización en redes tensoriales para comprimir circuitos cuánticos."
+    ],
+    [
+     "Palantir",
+     "Agrega datos de bajo nivel en patrones macro — la misma lógica que la renormalización."
+    ],
+    [
+     "Airbnb",
+     "Usa modelos de mercado a nivel de zona para simplificar la planificación de oferta y demanda."
+    ]
+   ]
+  }
+ },
+ {
+  "type": "quote",
+  "en": {
+   "kicker": "Renormalization-Based Engineering",
+   "title": "From theory to the research frontier",
+   "body": "The same renormalization logic now anchors research programs and products across quantum computing, biotech, and AI infrastructure."
+  },
+  "es": {
+   "kicker": "Ingeniería basada en la renormalización",
+   "title": "De la teoría a la frontera de la investigación",
+   "body": "La misma lógica de renormalización hoy sostiene programas de investigación y productos en computación cuántica, biotecnología e infraestructura de IA."
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Research labs",
+   "title": "Perimeter Institute Quantum Intelligence Lab (PIQuIL)",
+   "body": [
+    "PIQuIL's research agenda spans quantum devices, neural networks for quantum error correction, and efficient representations of quantum wave functions.",
+    "Researchers there also study the relationship between deep learning and phase transitions, among other quantum models.",
+    "The lab's leadership combines deep expertise across quantum intelligence, education, and industry partnerships."
+   ]
+  },
+  "es": {
+   "kicker": "Laboratorios de investigación",
+   "title": "Perimeter Institute Quantum Intelligence Lab (PIQuIL)",
+   "body": [
+    "La agenda de investigación de PIQuIL abarca dispositivos cuánticos, redes neuronales para la corrección de errores cuánticos y representaciones eficientes de funciones de onda cuánticas.",
+    "Sus investigadores también estudian la relación entre el aprendizaje profundo y las transiciones de fase, entre otros modelos cuánticos.",
+    "El liderazgo del laboratorio combina una profunda experiencia en inteligencia cuántica, educación y asociaciones con la industria."
+   ]
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Industry",
+   "title": "Multiverse Computing (Spain / Canada)",
+   "body": [
+    "Multiverse Computing applies quantum-inspired compression across several product lines — shown across multiple examples in the original deck."
+   ],
+   "callout": "RG signature: they use Matrix Product States (MPS) and DMRG-like structures — formal RG tools from quantum physics."
+  },
+  "es": {
+   "kicker": "Industria",
+   "title": "Multiverse Computing (España / Canadá)",
+   "body": [
+    "Multiverse Computing aplica compresión inspirada en la cuántica a varias líneas de producto — mostrado en varios ejemplos en la presentación original."
+   ],
+   "callout": "Firma del GR: usan Estados de Producto Matricial (MPS) y estructuras tipo DMRG — herramientas formales de GR de la física cuántica."
+  }
+ },
+ {
+  "type": "text",
+  "en": {
+   "kicker": "Industry",
+   "title": "DeepMind (Alphabet / Google)",
+   "body": [
+    "AlphaFold and other physics-informed AI models use hierarchical representations that mimic RG flow across energy or spatial scales."
+   ],
+   "callout": "RG signature: implicit scale transformations encode physical laws across biological scales — from amino acid, to structure, to dynamics."
+  },
+  "es": {
+   "kicker": "Industria",
+   "title": "DeepMind (Alphabet / Google)",
+   "body": [
+    "AlphaFold y otros modelos de IA basados en la física usan representaciones jerárquicas que imitan el flujo de GR a través de escalas de energía o espaciales."
+   ],
+   "callout": "Firma del GR: transformaciones de escala implícitas codifican leyes físicas a través de escalas biológicas — desde el aminoácido, hasta la estructura, hasta la dinámica."
+  }
+ },
+ {
+  "type": "table",
+  "en": {
+   "kicker": "NVIDIA · Schrödinger Inc. · QCWare — materials & drug discovery",
+   "title": "Coarse-graining across the research landscape",
+   "headers": [
+    "Provider / focus",
+    "Resource",
+    "RG-style hierarchy"
+   ],
+   "rows": [
+    [
+     "Schrödinger / NVIDIA (industrial)",
+     "Coarse-grained simulation platform documentation",
+     "Electronic → atomistic → mesoscale → macro"
+    ],
+    [
+     "QCWare (quantum interactions)",
+     "Work on coarse-grained intermolecular interactions on quantum processors (2021)",
+     "Coarse-grained electronic response via variational quantum algorithms"
+    ],
+    [
+     "Noid et al. (2008)",
+     "A formal multiscale coarse-graining method bridging atomistic and CG models",
+     "Rigorous projection / ensemble matching"
+    ],
+    [
+     "Wang et al. — CGnets (2019)",
+     "A deep-learning-based coarse-grained free-energy model",
+     "Learned coarse forces approximating atomistic behavior"
+    ],
+    [
+     "Husic et al. (2020)",
+     "Graph neural coarse-graining that learns representations and dynamics",
+     "Hierarchical learned model"
+    ],
+    [
+     "Lyu & Lei (2023)",
+     "Mori–Zwanzig, ML-based coarse-grained molecular dynamics with memory functions",
+     "Projection retaining many-body memory terms"
+    ]
+   ],
+   "note": "RG signature: hierarchical approximations reduce compute cost while preserving chemical accuracy."
+  },
+  "es": {
+   "kicker": "NVIDIA · Schrödinger Inc. · QCWare — materiales y descubrimiento de fármacos",
+   "title": "El coarse-graining en el panorama de la investigación",
+   "headers": [
+    "Proveedor / enfoque",
+    "Recurso",
+    "Jerarquía tipo GR"
+   ],
+   "rows": [
+    [
+     "Schrödinger / NVIDIA (industrial)",
+     "Documentación de la plataforma de simulación de grano grueso (CG)",
+     "Electrónico → atomístico → mesoescala → macro"
+    ],
+    [
+     "QCWare (interacciones cuánticas)",
+     "Trabajo sobre interacciones intermoleculares de grano grueso en procesadores cuánticos (2021)",
+     "Respuesta electrónica de grano grueso vía algoritmos cuánticos variacionales"
+    ],
+    [
+     "Noid et al. (2008)",
+     "Un método formal de grano grueso multiescala que conecta modelos atomísticos y CG",
+     "Proyección rigurosa / ajuste de conjuntos"
+    ],
+    [
+     "Wang et al. — CGnets (2019)",
+     "Un modelo de energía libre de grano grueso basado en aprendizaje profundo",
+     "Fuerzas gruesas aprendidas que aproximan el comportamiento atomístico"
+    ],
+    [
+     "Husic et al. (2020)",
+     "Grano grueso con redes neuronales de grafos que aprende representaciones y dinámicas",
+     "Modelo jerárquico aprendido"
+    ],
+    [
+     "Lyu & Lei (2023)",
+     "Dinámica molecular de grano grueso basada en ML con funciones de memoria de Mori–Zwanzig",
+     "Proyección que conserva términos de memoria de muchos cuerpos"
+    ]
+   ],
+   "note": "Firma del GR: las aproximaciones jerárquicas reducen el costo de cómputo mientras preservan la precisión química."
+  }
+ },
+ {
+  "type": "table",
+  "en": {
+   "kicker": "Renormalization-Based Engineering",
+   "title": "Startups applying RG-like practices",
+   "headers": [
+    "Startup",
+    "Domain",
+    "RG-like practice"
+   ],
+   "rows": [
+    [
+     "nference",
+     "Biomedical data fusion",
+     "Compresses EHR and genomic data into latent representations (effective variables)."
+    ],
+    [
+     "Tempus",
+     "Oncology AI",
+     "Reduces high-dimensional genetic and clinical data into actionable predictive scales."
+    ],
+    [
+     "Qure.ai",
+     "Radiology",
+     "Extracts hierarchical features from brain/chest images, bypassing local pixel noise."
+    ]
+   ]
+  },
+  "es": {
+   "kicker": "Ingeniería basada en la renormalización",
+   "title": "Startups que aplican prácticas similares al GR",
+   "headers": [
+    "Startup",
+    "Dominio",
+    "Práctica similar al GR"
+   ],
+   "rows": [
+    [
+     "nference",
+     "Fusión de datos biomédicos",
+     "Comprime historiales clínicos y datos genómicos en representaciones latentes (variables efectivas)."
+    ],
+    [
+     "Tempus",
+     "IA en oncología",
+     "Reduce datos genéticos y clínicos de alta dimensión a escalas predictivas útiles."
+    ],
+    [
+     "Qure.ai",
+     "Radiología",
+     "Extrae características jerárquicas de imágenes de cerebro/tórax, evitando el ruido local de píxeles."
+    ]
+   ]
+  }
+ },
+ {
+  "type": "table",
+  "en": {
+   "kicker": "Renormalization-Based Engineering",
+   "title": "RG theory, translated into commercial language",
+   "headers": [
+    "RG theory (physics)",
+    "Commercial equivalent"
+   ],
+   "rows": [
+    [
+     "Coarse-graining",
+     "Dimensionality reduction / PCA"
+    ],
+    [
+     "RG flow",
+     "Layered feature abstraction (neural networks)"
+    ],
+    [
+     "Fixed points",
+     "Disease phenotypes / outcomes"
+    ],
+    [
+     "Relevant variables",
+     "Biomarkers / macro patterns"
+    ],
+    [
+     "DMRG / MPS",
+     "Tensor compression in quantum ML / AI"
+    ]
+   ]
+  },
+  "es": {
+   "kicker": "Ingeniería basada en la renormalización",
+   "title": "La teoría del GR, traducida al lenguaje comercial",
+   "headers": [
+    "Teoría del GR (física)",
+    "Equivalente comercial"
+   ],
+   "rows": [
+    [
+     "Coarse-graining",
+     "Reducción de dimensionalidad / PCA"
+    ],
+    [
+     "Flujo de GR",
+     "Abstracción de características por capas (redes neuronales)"
+    ],
+    [
+     "Puntos fijos",
+     "Fenotipos de enfermedad / resultados"
+    ],
+    [
+     "Variables relevantes",
+     "Biomarcadores / patrones macro"
+    ],
+    [
+     "DMRG / MPS",
+     "Compresión tensorial en ML cuántico / IA"
+    ]
+   ]
+  }
+ },
+ {
+  "type": "quote",
+  "en": {
+   "kicker": "Closing",
+   "title": "The throughline",
+   "body": "From qubits to forests, from hospitals to supply chains, the same move keeps paying off: zoom out, discard what doesn't govern the system, and keep only the variables that do."
+  },
+  "es": {
+   "kicker": "Cierre",
+   "title": "El hilo conductor",
+   "body": "De los cúbits a los bosques, de los hospitales a las cadenas de suministro, la misma jugada sigue funcionando: aléjate, descarta lo que no gobierna el sistema y conserva solo las variables que sí lo hacen."
+  }
+ },
+ {
+  "type": "closing",
+  "en": {
+   "title": "Thank you",
+   "subtitle": "Questions & discussion"
+  },
+  "es": {
+   "title": "Gracias",
+   "subtitle": "Preguntas y debate"
+  }
+ }
+]
+</script>
+
+<script>
+const SLIDES = JSON.parse(document.getElementById('slides-data').textContent);
+let idx = 0;
+let lang = 'en';
+const quizState = {}; // slideIndex -> selected option index
+
+const stage = document.getElementById('stage');
+const contentEl = document.getElementById('content');
+const kickerEl = document.getElementById('kicker');
+const counterEl = document.getElementById('counter');
+const progressBar = document.getElementById('progressBar');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+const LETTERS = ['A','B','C','D','E','F'];
+
+function esc(str){
+  if(str===undefined || str===null) return '';
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+function renderBullets(arr){
+  if(!arr || !arr.length) return '';
+  return `<ul class="bullets">${arr.map(b=>`<li>${esc(b)}</li>`).join('')}</ul>`;
+}
+function renderFormula(arr){
+  if(!arr || !arr.length) return '';
+  return `<div class="formula-block">${arr.map(f=>`<span class="formula">${esc(f)}</span>`).join('')}</div>`;
+}
+function renderCallout(text){
+  if(!text) return '';
+  return `<div class="callout">${esc(text)}</div>`;
+}
+function renderBody(arr_or_str){
+  if(!arr_or_str) return '';
+  if(Array.isArray(arr_or_str)) return arr_or_str.map(p=>`<p class="body-text">${esc(p)}</p>`).join('');
+  return `<p class="body-text">${esc(arr_or_str)}</p>`;
+}
+
+function renderTable(headers, rows){
+  const thead = `<thead><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr></thead>`;
+  const tbody = `<tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</tbody>`;
+  return `<div class="tbl-wrap"><table class="data">${thead}${tbody}</table></div>`;
+}
+
+function renderOptions(options, slideIdx, opts){
+  opts = opts || {};
+  const selected = quizState[slideIdx];
+  return `<div class="options">${options.map((o,i)=>{
+    let cls = 'option';
+    if(opts.answerIndex !== undefined){
+      if(i === opts.answerIndex) cls += ' correct';
+    } else if(selected === i){
+      cls += ' selected';
+    }
+    return `<div class="${cls}" data-i="${i}" onclick="selectOption(${slideIdx},${i})"><span class="letter">${LETTERS[i]}</span><span>${esc(o)}</span></div>`;
+  }).join('')}</div>`;
+}
+
+function selectOption(slideIdx, i){
+  const slide = SLIDES[slideIdx];
+  if(slide.type === 'reveal_quiz') return; // already revealed, no selection needed
+  quizState[slideIdx] = i;
+  render();
+}
+
+function renderSlide(){
+  const slide = SLIDES[idx];
+  const d = slide[lang];
+  kickerEl.textContent = d.kicker || '';
+  kickerEl.style.visibility = d.kicker ? 'visible' : 'hidden';
+
+  let html = '';
+
+  switch(slide.type){
+    case 'title':
+      html = `<div class="title-slide">
+        <h1 class="title">${esc(d.title)}</h1>
+        <p class="subtitle">${esc(d.subtitle)}</p>
+        <ul class="meta-list">${(d.meta||[]).map(m=>`<li>${esc(m)}</li>`).join('')}</ul>
+        <p class="tagline">${esc(d.tagline)}</p>
+      </div>`;
+      break;
+
+    case 'closing':
+      html = `<div class="closing-slide">
+        <h1 class="title">${esc(d.title)}</h1>
+        <p class="subtitle">${esc(d.subtitle)}</p>
+      </div>`;
+      break;
+
+    case 'quote':
+      html = `<div class="quote-slide">
+        <h1 class="title">${esc(d.title)}</h1>
+        ${renderBody(d.body)}
+      </div>`;
+      break;
+
+    case 'text':
+      html = `<h1 class="title">${esc(d.title)}</h1>
+        ${d.icon ? `<div class="icon-row">${d.icon}</div>` : ''}
+        ${renderFormula(d.formula)}
+        ${renderBody(d.body)}
+        ${renderBullets(d.bullets)}
+        ${renderCallout(d.callout)}`;
+      break;
+
+    case 'quiz':
+      html = `<h1 class="title" style="font-size:1.5em">${esc(d.title)}</h1>
+        ${renderFormula(d.formula)}
+        <p class="question">${esc(d.question)}</p>
+        ${renderOptions(d.options, idx, {})}
+        ${d.note ? `<div class="quiz-note">${esc(d.note)}</div>` : ''}`;
+      break;
+
+    case 'reveal_quiz':
+      html = `<h1 class="title" style="font-size:1.5em">${esc(d.title)}</h1>
+        <p class="question">${esc(d.question)}</p>
+        ${renderOptions(d.options, idx, {answerIndex:d.answer_index})}
+        <div class="answer-banner"><span class="tick">✓</span>${esc(d.answer_text)}</div>`;
+      break;
+
+    case 'reveal':
+      html = `<h1 class="title" style="font-size:1.5em">${esc(d.title)}</h1>
+        ${renderFormula(d.formula)}
+        ${renderBody(d.body)}`;
+      break;
+
+    case 'table':
+      html = `<h1 class="title" style="font-size:1.5em">${esc(d.title)}</h1>
+        ${renderBullets(d.bullets)}
+        ${renderTable(d.headers, d.rows)}
+        ${d.note ? `<p class="body-text" style="font-size:.85em">${esc(d.note)}</p>` : ''}`;
+      break;
+
+    case 'compare':
+      html = `<h1 class="title" style="font-size:1.5em">${esc(d.title)}</h1>
+        <div class="compare">
+          <div class="col colA"><h3>${esc(d.colA_title)}</h3><ul>${d.colA.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+          <div class="col colB"><h3>${esc(d.colB_title)}</h3><ul>${d.colB.map(x=>`<li>${esc(x)}</li>`).join('')}</ul></div>
+        </div>`;
+      break;
+
+    case 'stat':
+      html = `<h1 class="title" style="font-size:1.5em">${esc(d.title)}</h1>
+        ${renderBody(d.body)}
+        <div class="stat-row">
+          ${d.stats.map((s,i)=>`${i>0?'<div class="stat-arrow">→</div>':''}<div class="stat-card"><div class="label">${esc(s.label)}</div><div class="value">${esc(s.value)}</div><div class="sub">${esc(s.sub)}</div></div>`).join('')}
+        </div>`;
+      break;
+
+    case 'diagram':
+      html = `<h1 class="title" style="font-size:1.5em">${esc(d.title)}</h1>
+        <div class="diagram-row">
+          ${d.steps.map((s,i)=>`${i>0?'<div class="diagram-arrow">→</div>':''}<div class="diagram-step"><div class="glyph">${['🛕','🕸️','🔗'][i]||'◆'}</div><div class="cap">${esc(s)}</div></div>`).join('')}
+        </div>
+        ${renderBody(d.body)}
+        ${renderCallout(d.callout)}`;
+      break;
+
+    case 'coarse':
+      html = `<h1 class="title" style="font-size:1.5em">${esc(d.title)}</h1>
+        <div class="coarse-row">
+          <div class="dotgrid">${Array(24).fill('<span></span>').join('')}</div>
+          <div class="coarse-arrow">→</div>
+          <div class="dotgrid coarse">${Array(4).fill('<span></span>').join('')}</div>
+        </div>
+        ${renderBody(d.body)}`;
+      break;
+  }
+
+  contentEl.innerHTML = html;
+  counterEl.textContent = `${idx+1} / ${SLIDES.length}`;
+  progressBar.style.width = `${((idx+1)/SLIDES.length)*100}%`;
+  prevBtn.disabled = idx===0;
+  nextBtn.disabled = idx===SLIDES.length-1;
+  stage.setAttribute('lang', lang);
+}
+
+function render(){ renderSlide(); }
+
+function goTo(i){
+  idx = Math.max(0, Math.min(SLIDES.length-1, i));
+  render();
+}
+
+prevBtn.addEventListener('click', ()=>goTo(idx-1));
+nextBtn.addEventListener('click', ()=>goTo(idx+1));
+document.addEventListener('keydown', (e)=>{
+  if(e.key==='ArrowRight' || e.key===' ') { e.preventDefault(); goTo(idx+1); }
+  if(e.key==='ArrowLeft') { e.preventDefault(); goTo(idx-1); }
+});
+
+// language toggle
+const toggle = document.getElementById('langToggle');
+const thumb = document.getElementById('thumb');
+const langButtons = toggle.querySelectorAll('button');
+
+function positionThumb(btn){
+  thumb.style.width = btn.offsetWidth + 'px';
+  thumb.style.transform = `translateX(${btn.offsetLeft - 3}px)`;
+}
+function setLang(l){
+  lang = l;
+  langButtons.forEach(b=>b.classList.toggle('active', b.dataset.lang===l));
+  positionThumb(toggle.querySelector(`button[data-lang="${l}"]`));
+  render();
+}
+langButtons.forEach(b=>b.addEventListener('click', ()=>setLang(b.dataset.lang)));
+
+window.addEventListener('load', ()=>{ positionThumb(toggle.querySelector('button.active')); renderSlide(); });
+window.addEventListener('resize', ()=>{ positionThumb(toggle.querySelector('button.active')); });
+</script>
+</body>
+</html>

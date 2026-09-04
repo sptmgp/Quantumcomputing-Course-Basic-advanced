@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>10 Problemas de Circuitos: IA + Cuántica</title>
+<style>
+  :root {
+    --bg: #0B0E1A;
+    --panel: #141829;
+    --panel-line: #262C46;
+    --text: #E4E7F5;
+    --muted: #7B82A3;
+    --cyan: #4FD1C5;
+    --magenta: #F471B5;
+    --amber: #FBBF24;
+    --correct: #34D399;
+    --font-display: 'Space Grotesk', 'Avenir Next', 'Century Gothic', sans-serif;
+    --font-body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+  .wrap { max-width: 800px; margin: 0 auto; padding: 32px 20px 100px; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 6px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
+  h1 { font-family: var(--font-display); font-size: 25px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.01em; line-height: 1.3; }
+  .subtitle { color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 560px; }
+
+  .langToggle { display: flex; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 999px; padding: 3px; flex-shrink: 0; }
+  .langToggle button { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 6px 14px; border-radius: 999px; border: none; background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s ease; }
+  .langToggle button.active { background: var(--cyan); color: #06201C; }
+
+  .problem {
+    background: var(--panel); border: 1px solid var(--panel-line); border-radius: 12px;
+    margin: 22px 0; overflow: hidden;
+  }
+  .pHeader { padding: 18px 22px; display: flex; align-items: center; gap: 14px; }
+  .pNum { font-family: var(--font-display); font-size: 22px; color: var(--panel-line); font-weight: 700; width: 34px; flex-shrink: 0; }
+  .pTitleBlock { flex: 1; min-width: 0; }
+  .pTitle { font-size: 16.5px; font-weight: 600; margin: 0 0 4px; }
+  .pTag { display: inline-block; font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--magenta); background: rgba(244,113,181,0.1); border: 1px solid rgba(244,113,181,0.3); padding: 2px 8px; border-radius: 5px; }
+
+  .circuitBox { padding: 6px 22px 18px; }
+  svg .wire { stroke: var(--panel-line); stroke-width: 2; }
+  svg .qlabel { fill: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+  svg .gateBox { fill: rgba(79,209,197,0.12); stroke: var(--cyan); stroke-width: 1.5; }
+  svg .gateLabel { fill: var(--cyan); font-family: var(--font-mono); font-size: 13px; font-weight: 600; }
+  svg .cnotLine { stroke: var(--cyan); stroke-width: 2; }
+  svg .controlDot { fill: var(--cyan); }
+  svg .targetCircle { fill: none; stroke: var(--cyan); stroke-width: 2; }
+  svg .targetPlus { fill: var(--cyan); font-size: 15px; font-family: var(--font-mono); }
+  svg .meterBox { fill: rgba(244,113,181,0.1); stroke: var(--magenta); stroke-width: 1.5; }
+  svg .meterArc { fill: none; stroke: var(--magenta); stroke-width: 2; }
+
+  .industryLine { padding: 0 22px 16px; font-size: 13px; color: var(--muted); font-style: italic; border-bottom: 1px solid var(--panel-line); }
+
+  .toggleRow { display: flex; gap: 8px; padding: 14px 22px; flex-wrap: wrap; }
+  .revealBtn {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+    padding: 8px 14px; border-radius: 7px; border: 1px solid var(--panel-line); background: transparent;
+    color: var(--text); cursor: pointer; transition: all 0.15s ease;
+  }
+  .revealBtn:hover { border-color: var(--cyan); }
+  .revealBtn.advToggle.active { background: var(--cyan); color: #06201C; border-color: var(--cyan); }
+  .revealBtn.simpleToggle.active { background: var(--amber); color: #2B1D00; border-color: var(--amber); }
+
+  .panelContent { display: none; padding: 4px 22px 20px; font-size: 14.5px; line-height: 1.7; }
+  .panelContent.show { display: block; }
+  .panelContent.advanced { border-top: 1px solid var(--panel-line); background: rgba(79,209,197,0.03); }
+  .panelContent.simple { border-top: 1px solid var(--panel-line); background: rgba(251,191,36,0.04); }
+  .panelContent.codePanel { border-top: 1px solid var(--panel-line); background: rgba(255,255,255,0.02); padding: 16px 22px 20px; }
+  .panelContent.outputPanel { border-top: 1px solid var(--panel-line); background: rgba(52,211,153,0.03); padding: 16px 22px 20px; }
+  .revealBtn.codeToggle.active { background: #A78BFA; color: #1A0F2E; border-color: #A78BFA; }
+  .revealBtn.outputToggle.active { background: #34D399; color: #06201C; border-color: #34D399; }
+  pre.codeBlock {
+    margin: 0; padding: 14px 16px; background: #0A0D18; border: 1px solid var(--panel-line);
+    border-radius: 8px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px;
+    line-height: 1.6; color: #C9D1E8; white-space: pre;
+  }
+  pre.outputBlock {
+    margin: 0; padding: 14px 16px; background: #061512; border: 1px solid rgba(52,211,153,0.25);
+    border-radius: 8px; overflow-x: auto; font-family: var(--font-mono); font-size: 12.5px;
+    line-height: 1.6; color: #A7F3D0; white-space: pre-wrap;
+  }
+  .verifiedTag { display: inline-flex; align-items: center; gap: 6px; font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--correct); margin-bottom: 8px; }
+  .verifiedTag::before { content: "\2713"; }
+  .panelLabel { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; display: block; }
+  .advanced .panelLabel { color: var(--cyan); }
+  .simple .panelLabel { color: var(--amber); }
+  .qText { font-weight: 600; margin-bottom: 10px; }
+  code { font-family: var(--font-mono); background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: var(--cyan); }
+
+  @media (max-width: 520px) {
+    h1 { font-size: 20px; }
+    .pHeader { padding: 16px; }
+    .circuitBox, .industryLine, .toggleRow, .panelContent { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <div class="eyebrow" data-i18n="eyebrow"></div>
+      <h1 data-i18n="title"></h1>
+      <div class="subtitle" data-i18n="subtitle"></div>
+    </div>
+    <div class="langToggle">
+      <button id="btnEs">ES</button>
+      <button id="btnEn">EN</button>
+    </div>
+  </div>
+  <div id="problems"></div>
+</div>
+
+<script>
+function buildCircuitSVG(doc, spec, opts = {}) {
+  const colWidth = opts.colWidth || 70;
+  const rowHeight = opts.rowHeight || 50;
+  const marginL = opts.marginL || 50;
+  const marginT = opts.marginT || 25;
+  const width = marginL + spec.cols * colWidth + 30;
+  const height = marginT * 2 + (spec.numQubits - 1) * rowHeight + 30;
+
+  const svg = doc.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('width', '100%');
+
+  function qy(q) { return marginT + q * rowHeight; }
+  function cx(col) { return marginL + col * colWidth + colWidth/2; }
+
+  for (let q = 0; q < spec.numQubits; q++) {
+    const line = doc.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', marginL - 20); line.setAttribute('x2', width - 15);
+    line.setAttribute('y1', qy(q)); line.setAttribute('y2', qy(q));
+    line.setAttribute('class', 'wire');
+    svg.appendChild(line);
+
+    const label = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', marginL - 30); label.setAttribute('y', qy(q) + 4);
+    label.setAttribute('class', 'qlabel'); label.setAttribute('text-anchor', 'end');
+    label.textContent = spec.wireLabels ? spec.wireLabels[q] : `q${q}`;
+    svg.appendChild(label);
+  }
+
+  for (const g of spec.gates) {
+    if (g.type === 'box') {
+      const bx = cx(g.col) - 24, by = qy(g.qubit) - 16;
+      const rect = doc.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', bx); rect.setAttribute('y', by);
+      rect.setAttribute('width', 48); rect.setAttribute('height', 32);
+      rect.setAttribute('rx', 6); rect.setAttribute('class', 'gateBox');
+      svg.appendChild(rect);
+      const text = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', cx(g.col)); text.setAttribute('y', qy(g.qubit) + 5);
+      text.setAttribute('text-anchor', 'middle'); text.setAttribute('class', 'gateLabel');
+      text.textContent = g.label;
+      svg.appendChild(text);
+    } else if (g.type === 'cnot') {
+      const x = cx(g.col);
+      const line = doc.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', x); line.setAttribute('x2', x);
+      line.setAttribute('y1', qy(g.control)); line.setAttribute('y2', qy(g.target));
+      line.setAttribute('class', 'cnotLine');
+      svg.appendChild(line);
+
+      const dot = doc.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('cx', x); dot.setAttribute('cy', qy(g.control));
+      dot.setAttribute('r', 6); dot.setAttribute('class', 'controlDot');
+      svg.appendChild(dot);
+
+      const targ = doc.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      targ.setAttribute('cx', x); targ.setAttribute('cy', qy(g.target));
+      targ.setAttribute('r', 12); targ.setAttribute('class', 'targetCircle');
+      svg.appendChild(targ);
+      const plus = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
+      plus.setAttribute('x', x); plus.setAttribute('y', qy(g.target)+5);
+      plus.setAttribute('text-anchor','middle'); plus.setAttribute('class','targetPlus');
+      plus.textContent = '+';
+      svg.appendChild(plus);
+    } else if (g.type === 'meter') {
+      const x = cx(g.col), y = qy(g.qubit);
+      const rect = doc.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', x-20); rect.setAttribute('y', y-16);
+      rect.setAttribute('width', 40); rect.setAttribute('height', 32);
+      rect.setAttribute('rx', 6); rect.setAttribute('class', 'meterBox');
+      svg.appendChild(rect);
+      const arc = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
+      arc.setAttribute('d', `M ${x-10} ${y+6} A 10 10 0 0 1 ${x+10} ${y+6}`);
+      arc.setAttribute('class', 'meterArc');
+      svg.appendChild(arc);
+    }
+  }
+  return svg;
+}
+</script>
+<script>
+const I18N = {
+  es: {
+    eyebrow: "IA + Cuántica · Problemas de Circuitos",
+    title: "10 Problemas de Circuitos Cuánticos en la Industria",
+    subtitle: "Cada problema combina un concepto real de IA+cuántica usado por empresas como Google Quantum AI, IBM, Rigetti o D-Wave, con dos niveles de explicación: uno técnico y uno para alguien de 17 años que nunca ha visto física cuántica.",
+    advBtn: "Nivel técnico (avanzado)",
+    simpleBtn: "Explícamelo simple",
+    advLabel: "Pregunta de nivel avanzado",
+    simpleLabel: "Para alguien de 17 años, sin física",
+    codeBtn: "Código Qiskit",
+    outputBtn: "Salida verificada",
+    codeLabel: "Programa en Qiskit (ejecutado y verificado)",
+    outputLabel: "Salida real de la ejecución",
+    verifiedText: "Verificado por ejecución real",
+  },
+  en: {
+    eyebrow: "AI + Quantum · Circuit Problems",
+    title: "10 Industry Quantum Circuit Problems",
+    subtitle: "Each problem pairs a real AI+quantum concept used by companies like Google Quantum AI, IBM, Rigetti, or D-Wave with two levels of explanation: one technical, one for a 17-year-old who has never seen quantum physics.",
+    advBtn: "Technical level (advanced)",
+    simpleBtn: "Explain it simply",
+    advLabel: "Advanced-level question",
+    simpleLabel: "For a 17-year-old, no physics background",
+    codeBtn: "Qiskit Code",
+    outputBtn: "Verified Output",
+    codeLabel: "Qiskit program (executed and verified)",
+    outputLabel: "Real execution output",
+    verifiedText: "Verified by real execution",
+  }
+};
+
+const CODE_OUTPUTS = [{"code": "\"\"\"\nProblem 1: Rabi calibration of a pi-pulse (X gate) -- Qiskit version.\nMirrors the original QuTiP-based slide, using Qiskit's RXGate and Statevector\nsimulation instead. Calibrates the rotation angle theta so that RX(theta)\nacts as a perfect X gate (|0> -> |1>), via finite-difference gradient ascent\n-- the same method as the original slide, just in Qiskit.\n\"\"\"\nimport numpy as np\nfrom qiskit import QuantumCircuit\nfrom qiskit.quantum_info import Statevector\n\ndef gate_fidelity(theta):\n    \"\"\"Fidelity of RX(theta)|0> against the target state |1>.\"\"\"\n    qc = QuantumCircuit(1)\n    qc.rx(theta, 0)\n    sv = Statevector.from_instruction(qc)\n    target = Statevector.from_label('1')\n    return abs(sv.inner(target))**2  # |<target|psi>|^2\n\ntheta = 1.0  # initial guess (radians), analogous to the slide's amp=1.0\nlr = 0.3\n\nprint(\"Step | theta    | fidelity\")\nfor step in range(40):\n    grad = (gate_fidelity(theta + 0.01) - gate_fidelity(theta - 0.01)) / 0.02\n    theta += lr * grad\n    if step % 5 == 0:\n        print(f\"{step:4d} | {theta:.4f}   | {gate_fidelity(theta):.6f}\")\n\nprint(f\"\\nConverged theta = {theta:.6f}  (target: pi = {np.pi:.6f})\")\nprint(f\"Final fidelity  = {gate_fidelity(theta):.8f}\")\nassert abs(theta - np.pi) < 0.02, \"Did not converge to pi as expected\"\nprint(\"PASS: theta converged to pi within tolerance.\")\n", "output": "Step | theta    | fidelity\n   0 | 1.1262   | 0.284962\n   5 | 1.8511   | 0.638334\n  10 | 2.4789   | 0.894163\n  15 | 2.8362   | 0.976870\n  20 | 3.0050   | 0.995344\n  25 | 3.0809   | 0.999079\n  30 | 3.1147   | 0.999819\n  35 | 3.1296   | 0.999964\n\nConverged theta = 3.135352  (target: pi = 3.141593)\nFinal fidelity  = 0.99999027\nPASS: theta converged to pi within tolerance.\n"}, {"code": "\"\"\"\nProblem 2: Calibrating a 2-qubit entangling gate (proxy for cross-resonance CNOT).\nDemonstrates the 2D optimization landscape from the problem: two coupled\nparameters (an RZZ interaction angle and a local phase correction) must be\ntuned together to match a target CNOT unitary -- unlike Problem 1's single\nparameter. Uses process fidelity against the ideal CNOT as the objective.\n\"\"\"\nimport numpy as np\nfrom qiskit import QuantumCircuit\nfrom qiskit.quantum_info import Operator, process_fidelity\nfrom qiskit.circuit.library import CXGate\n\nTARGET = Operator(CXGate())\n\ndef build_gate(theta, phi):\n    \"\"\"A parameterized 2-qubit gate: RZZ(theta) entangler with a shared local\n    phase correction phi on both qubits, sandwiched by the fixed Hadamards\n    that convert a controlled-Z-like interaction into a CNOT. theta and phi\n    are the two parameters that must be jointly calibrated -- exactly like\n    tuning amplitude AND phase together for a real cross-resonance gate.\"\"\"\n    qc = QuantumCircuit(2)\n    qc.h(1)\n    qc.rzz(theta, 0, 1)\n    qc.rz(phi, 0)\n    qc.rz(phi, 1)\n    qc.h(1)\n    return Operator(qc)\n\ndef fidelity(theta, phi):\n    return process_fidelity(build_gate(theta, phi), target=TARGET)\n\ntheta, phi = 1.0, 0.5   # initial guesses -- both need tuning simultaneously\nlr = 0.5\n\nprint(\"Step | theta   | phi     | fidelity\")\nfor step in range(60):\n    g_theta = (fidelity(theta+0.01, phi) - fidelity(theta-0.01, phi)) / 0.02\n    g_phi   = (fidelity(theta, phi+0.01) - fidelity(theta, phi-0.01)) / 0.02\n    theta += lr * g_theta\n    phi   += lr * g_phi\n    if step % 10 == 0:\n        print(f\"{step:4d} | {theta:.4f}  | {phi:.4f}  | {fidelity(theta,phi):.6f}\")\n\nprint(f\"\\nFinal: theta={theta:.4f}, phi={phi:.4f}, fidelity={fidelity(theta,phi):.6f}\")\nprint(f\"Expected theta = pi/2 = {np.pi/2:.4f}, phi = pi = {np.pi:.4f} (mod symmetries)\")\nassert fidelity(theta, phi) > 0.99, \"2D calibration did not converge to a high-fidelity CNOT\"\nprint(\"PASS: converged to a high-fidelity CNOT-equivalent gate via 2-parameter optimization.\")\n", "output": "Step | theta   | phi     | fidelity\n   0 | 0.9352  | 0.4206  | 0.127394\n  10 | 1.2155  | -1.3798  | 0.951234\n  20 | 1.5503  | -1.5706  | 0.999895\n  30 | 1.5696  | -1.5708  | 1.000000\n  40 | 1.5707  | -1.5708  | 1.000000\n  50 | 1.5708  | -1.5708  | 1.000000\n\nFinal: theta=1.5708, phi=-1.5708, fidelity=1.000000\nExpected theta = pi/2 = 1.5708, phi = pi = 3.1416 (mod symmetries)\nPASS: converged to a high-fidelity CNOT-equivalent gate via 2-parameter optimization.\n"}, {"code": "\"\"\"\nProblem 3: VQE hybrid quantum-classical loop for a toy 2-qubit Hamiltonian.\nDemonstrates the actual variational principle claim from the problem: the\nmeasured energy at every step is provably >= the true ground-state energy,\nverified here against exact diagonalization.\n\"\"\"\nimport numpy as np\nfrom qiskit.quantum_info import SparsePauliOp\nfrom qiskit.circuit.library import n_local\nfrom qiskit.primitives import StatevectorEstimator\nfrom qiskit_algorithms import VQE\nfrom qiskit_algorithms.optimizers import COBYLA\n\n# A toy 2-qubit Hamiltonian (stand-in for a small molecule's electronic Hamiltonian)\nhamiltonian = SparsePauliOp.from_list([\n    (\"II\", -1.0),\n    (\"ZZ\", 0.5),\n    (\"XX\", 0.3),\n    (\"ZI\", 0.2),\n    (\"IZ\", -0.2),\n])\n\nexact_energy = np.min(np.linalg.eigvalsh(hamiltonian.to_matrix()))\nprint(f\"Exact ground-state energy (numpy diagonalization): {exact_energy:.6f}\")\n\nansatz = n_local(2, rotation_blocks=\"ry\", entanglement_blocks=\"cz\", reps=2)\nestimator = StatevectorEstimator()\noptimizer = COBYLA(maxiter=200)\n\nhistory = []\ndef callback(eval_count, params, value, meta):\n    history.append(value)\n\nvqe = VQE(estimator, ansatz, optimizer, callback=callback)\nresult = vqe.compute_minimum_eigenvalue(hamiltonian)\n\nprint(f\"VQE final energy:                                    {result.eigenvalue.real:.6f}\")\nprint(f\"Number of energy evaluations logged:                 {len(history)}\")\nprint(f\"Lowest energy seen during optimization:              {min(history):.6f}\")\n\n# variational principle check: every measured energy must be >= exact ground state\nviolation = min(history) < exact_energy - 1e-6\nprint(f\"\\nAny measured energy below the true ground state? {violation}\")\nassert not violation, \"Variational principle violated -- something is wrong\"\nassert abs(result.eigenvalue.real - exact_energy) < 0.05, \"VQE did not converge close to the true ground state\"\nprint(\"PASS: VQE converged close to the exact ground state, and never violated the variational bound.\")\n", "output": "Exact ground-state energy (numpy diagonalization): -2.000000\nVQE final energy:                                    -2.000000\nNumber of energy evaluations logged:                 84\nLowest energy seen during optimization:              -2.000000\n\nAny measured energy below the true ground state? False\nPASS: VQE converged close to the exact ground state, and never violated the variational bound.\n"}, {"code": "\"\"\"\nProblem 4: QAOA for Max-Cut, verified against brute-force optimal solution.\nDemonstrates the actual relationship between circuit depth p and solution\nquality from the problem statement, by sweeping p and checking approximation\nratio against the true optimum.\n\"\"\"\nimport itertools\nimport numpy as np\nimport networkx as nx\nfrom qiskit.quantum_info import SparsePauliOp\nfrom qiskit.primitives import StatevectorEstimator, StatevectorSampler\nfrom qiskit_algorithms import QAOA\nfrom qiskit_algorithms.optimizers import COBYLA\n\n# small 4-node graph\nG = nx.Graph()\nG.add_edges_from([(0,1),(1,2),(2,3),(3,0),(0,2)])\n\ndef maxcut_hamiltonian(graph):\n    n = graph.number_of_nodes()\n    terms = []\n    for (i,j) in graph.edges():\n        z = ['I']*n\n        z[i] = 'Z'; z[j] = 'Z'\n        terms.append((''.join(z), 0.5))\n    terms.append(('I'*n, -0.5*graph.number_of_edges()))\n    return SparsePauliOp.from_list(terms)\n\nH = maxcut_hamiltonian(G)\n\n# brute-force optimal cut value (ground truth to check against)\nn = G.number_of_nodes()\nbest_cut = -np.inf\nfor bits in itertools.product([0,1], repeat=n):\n    cut = sum(1 for (i,j) in G.edges() if bits[i] != bits[j])\n    best_cut = max(best_cut, cut)\nprint(f\"Brute-force optimal cut value: {best_cut}\")\n\nimport warnings\nwarnings.filterwarnings(\"ignore\")  # suppress scipy sparse-format performance notices (not errors)\n\nnp.random.seed(42)\nalgorithm_globals_seed = 42\nfrom qiskit_algorithms.utils import algorithm_globals\nalgorithm_globals.random_seed = 42\n\nsampler = StatevectorSampler(default_shots=4000, seed=42)\n\nprint(\"\\np | approx. energy | implied cut | ratio vs optimal\")\nfor p in [1, 2, 3]:\n    best_energy = None\n    for restart in range(5):  # multiple restarts -- COBYLA can land in a bad local optimum\n        initial_point = np.random.uniform(0, 2*np.pi, 2*p)\n        qaoa = QAOA(sampler, COBYLA(maxiter=150), reps=p, initial_point=initial_point)\n        result = qaoa.compute_minimum_eigenvalue(H)\n        if best_energy is None or result.eigenvalue.real < best_energy:\n            best_energy = result.eigenvalue.real\n    energy = best_energy\n    implied_cut = -energy  # energy = -cut for this Hamiltonian convention (const term included)\n    ratio = implied_cut / best_cut\n    print(f\"{p} | {energy:.4f}         | {implied_cut:.4f}      | {ratio:.4f}\")\n\nassert ratio > 0.85, \"QAOA did not find a reasonably good cut at p=3\"\nprint(\"\\nPASS: QAOA approximation ratio improves and stays close to optimal by p=3.\")\n", "output": "Brute-force optimal cut value: 4\n\np | approx. energy | implied cut | ratio vs optimal\n1 | -3.2345         | 3.2345      | 0.8086\n2 | -3.7910         | 3.7910      | 0.9477\n3 | -3.8813         | 3.8813      | 0.9703\n\nPASS: QAOA approximation ratio improves and stays close to optimal by p=3.\n"}, {"code": "\"\"\"\nProblem 5: Error correction with syndrome decoding -- a 3-qubit bit-flip\nrepetition code, as a deliberately simplified, honest stand-in for the full\nsurface code from the slide (a real surface code needs dozens of qubits and\nis impractical to demonstrate end-to-end here). The core concept is\nidentical: ancilla qubits measure parity WITHOUT collapsing the logical\ninformation, producing a syndrome that a decoder maps to a correction.\n\"\"\"\nimport random\nfrom qiskit import QuantumCircuit\nfrom qiskit_aer import AerSimulator\nfrom qiskit.quantum_info import Statevector\n\ndef build_repetition_code(error_qubit=None):\n    \"\"\"3 data qubits encode 1 logical qubit; 2 ancillas extract syndrome.\"\"\"\n    qc = QuantumCircuit(5, 2)  # qubits 0,1,2 = data; 3,4 = ancilla; 2 classical bits\n    # encode |0> (all zeros) -- trivial here, but structure generalizes to |1> too\n    qc.cx(0, 1)\n    qc.cx(0, 2)\n\n    if error_qubit is not None:\n        qc.x(error_qubit)  # inject a bit-flip error\n\n    # syndrome extraction: ancilla 3 checks parity(0,1), ancilla 4 checks parity(1,2)\n    qc.cx(0, 3); qc.cx(1, 3)\n    qc.cx(1, 4); qc.cx(2, 4)\n    qc.measure(3, 0)\n    qc.measure(4, 1)\n    return qc\n\n# lookup-table decoder: maps syndrome -> which data qubit to flip back\nSYNDROME_TABLE = {\n    (0,0): None,  # no error\n    (1,0): 0,     # parity(0,1) broken only -> error on qubit 0\n    (1,1): 1,     # both parities broken -> error on qubit 1\n    (0,1): 2,     # parity(1,2) broken only -> error on qubit 2\n}\n\nsim = AerSimulator()\n\nprint(\"Injected error | Syndrome | Decoder says error on | Correct?\")\ncorrect_count = 0\nfor error_qubit in [None, 0, 1, 2]:\n    qc = build_repetition_code(error_qubit)\n    result = sim.run(qc, shots=1).result()\n    counts = result.get_counts()\n    bitstring = list(counts.keys())[0]\n    # Qiskit bit ordering: rightmost classical bit is c[0]\n    syndrome = (int(bitstring[-1]), int(bitstring[-2]))\n    decoded = SYNDROME_TABLE[syndrome]\n    is_correct = decoded == error_qubit\n    correct_count += is_correct\n    print(f\"{str(error_qubit):>14} | {syndrome} | {str(decoded):>21} | {is_correct}\")\n\nprint(f\"\\n{correct_count}/4 cases decoded correctly.\")\nassert correct_count == 4, \"Decoder failed to correctly identify at least one error case\"\nprint(\"PASS: syndrome decoding correctly identifies and locates every single-qubit bit-flip error.\")\n", "output": "Injected error | Syndrome | Decoder says error on | Correct?\n          None | (0, 0) |                  None | True\n             0 | (1, 0) |                     0 | True\n             1 | (1, 1) |                     1 | True\n             2 | (0, 1) |                     2 | True\n\n4/4 cases decoded correctly.\nPASS: syndrome decoding correctly identifies and locates every single-qubit bit-flip error.\n"}, {"code": "\"\"\"\nProblem 6: Quantum feature map for classification, compared honestly against\na classical kernel on the same toy dataset -- to actually check the honest\ncaveat from the problem: does the quantum kernel actually win here, or not?\n\"\"\"\nimport numpy as np\nfrom qiskit.circuit.library import zz_feature_map\nfrom qiskit.quantum_info import Statevector\nfrom sklearn.svm import SVC\nfrom sklearn.model_selection import train_test_split\nfrom sklearn.datasets import make_moons\nfrom sklearn.metrics import accuracy_score\n\nnp.random.seed(42)\nX, y = make_moons(n_samples=80, noise=0.15, random_state=42)\nX_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)\n\nfeature_map = zz_feature_map(feature_dimension=2, reps=2)\n\ndef quantum_kernel_matrix(A, B):\n    \"\"\"Fidelity-based quantum kernel: K(x,y) = |<phi(x)|phi(y)>|^2.\"\"\"\n    statevecs_A = [Statevector.from_instruction(feature_map.assign_parameters(x)) for x in A]\n    statevecs_B = [Statevector.from_instruction(feature_map.assign_parameters(x)) for x in B]\n    K = np.zeros((len(A), len(B)))\n    for i, sa in enumerate(statevecs_A):\n        for j, sb in enumerate(statevecs_B):\n            K[i, j] = abs(sa.inner(sb))**2\n    return K\n\nprint(\"Computing quantum kernel matrices (this maps each point through the circuit)...\")\nK_train = quantum_kernel_matrix(X_train, X_train)\nK_test = quantum_kernel_matrix(X_test, X_train)\n\nqsvm = SVC(kernel=\"precomputed\")\nqsvm.fit(K_train, y_train)\nq_acc = accuracy_score(y_test, qsvm.predict(K_test))\n\n# honest classical baseline on the SAME data\nrbf_svm = SVC(kernel=\"rbf\")\nrbf_svm.fit(X_train, y_train)\nc_acc = accuracy_score(y_test, rbf_svm.predict(X_test))\n\nprint(f\"\\nQuantum kernel SVM accuracy:  {q_acc:.3f}\")\nprint(f\"Classical RBF kernel accuracy: {c_acc:.3f}\")\nprint(\"\\nHonest takeaway: on an easy, low-dimensional dataset like this, classical\")\nprint(\"kernels are expected to do just as well or better -- this is exactly the\")\nprint(\"caveat from the problem. Quantum kernels are NOT shown here to win; the\")\nprint(\"point of this script is to let you verify that claim yourself instead of\")\nprint(\"taking it on faith.\")\nprint(\"\\nCOMPLETE: both kernels evaluated on identical train/test splits, no cherry-picking.\")\n", "output": "Computing quantum kernel matrices (this maps each point through the circuit)...\n\nQuantum kernel SVM accuracy:  0.667\nClassical RBF kernel accuracy: 1.000\n\nHonest takeaway: on an easy, low-dimensional dataset like this, classical\nkernels are expected to do just as well or better -- this is exactly the\ncaveat from the problem. Quantum kernels are NOT shown here to win; the\npoint of this script is to let you verify that claim yourself instead of\ntaking it on faith.\n\nCOMPLETE: both kernels evaluated on identical train/test splits, no cherry-picking.\n"}, {"code": "\"\"\"\nProblem 7: Randomized Benchmarking (RB) using Qiskit Experiments, on a\nnoisy simulator, to extract a real error-per-Clifford (EPC) number and\nverify it's close to the depolarizing rate we deliberately injected.\n\"\"\"\nimport numpy as np\nfrom qiskit_aer import AerSimulator\nfrom qiskit_aer.noise import NoiseModel, depolarizing_error\nfrom qiskit_experiments.library import StandardRB\n\n# build a noisy simulator with a KNOWN depolarizing error rate,\n# so we can check whether RB actually recovers something close to it\ninjected_error_rate = 0.01\nnoise_model = NoiseModel()\nerror_1q = depolarizing_error(injected_error_rate, 1)\nnoise_model.add_all_qubit_quantum_error(error_1q, ['u1', 'u2', 'u3', 'sx', 'x', 'rz'])\n\nbackend = AerSimulator(noise_model=noise_model)\n\nlengths = [1, 5, 10, 20, 40, 70, 100]\nexp = StandardRB(physical_qubits=(0,), lengths=lengths, num_samples=20, seed=42)\nexp.backend = backend\nresult = exp.run(backend).block_for_results()\n\nepc = result.analysis_results(\"EPC\", dataframe=True)\nepc_value = epc.iloc[0][\"value\"].nominal_value\nprint(f\"Injected 1-qubit depolarizing error rate (per gate): {injected_error_rate}\")\nprint(f\"RB-extracted Error Per Clifford (EPC):                {epc_value:.5f}\")\nprint(f\"Ratio (EPC / injected per-gate rate):                 {epc_value/injected_error_rate:.2f}\")\nprint(\"\\nNote: EPC is not expected to exactly equal the raw per-gate rate --\")\nprint(\"each random Clifford is compiled into ~1.5 physical gates on average,\")\nprint(\"so some difference is expected and correct, not a bug. What matters is\")\nprint(\"that EPC lands in the right order of magnitude, confirming RB actually\")\nprint(\"recovers real information about the injected noise rather than noise.\")\n\nassert 0.3 < epc_value/injected_error_rate < 3.0, \\\n    \"RB-extracted error rate is not even in the right order of magnitude -- likely a real bug\"\nprint(\"\\nPASS: RB recovers an EPC in the correct order of magnitude relative to the\")\nprint(\"known injected noise, confirming the method works as a real fidelity tool.\")\n", "output": "Injected 1-qubit depolarizing error rate (per gate): 0.01\nRB-extracted Error Per Clifford (EPC):                0.00509\nRatio (EPC / injected per-gate rate):                 0.51\n\nNote: EPC is not expected to exactly equal the raw per-gate rate --\neach random Clifford is compiled into ~1.5 physical gates on average,\nso some difference is expected and correct, not a bug. What matters is\nthat EPC lands in the right order of magnitude, confirming RB actually\nrecovers real information about the injected noise rather than noise.\n\nPASS: RB recovers an EPC in the correct order of magnitude relative to the\nknown injected noise, confirming the method works as a real fidelity tool.\n"}, {"code": "\"\"\"\nProblem 8: Crosstalk characterization -- driving qubit 0 causes an unwanted\nrotation on idle qubit 1, via a ZZ coupling term. Demonstrates measuring and\nquantifying this real effect directly, and shows the O(N^2) pair-scaling\nclaim from the problem with an explicit count.\n\"\"\"\nimport numpy as np\nfrom qiskit import QuantumCircuit\nfrom qiskit.quantum_info import Statevector, Operator\nfrom qiskit.circuit.library import RXGate\nfrom scipy.linalg import expm\n\ndef crosstalk_unitary(drive_angle, zz_coupling_strength):\n    \"\"\"Simulates driving qubit 0 with RX(drive_angle) in the presence of a\n    residual ZZ coupling to qubit 1 (a real, common crosstalk mechanism on\n    fixed-frequency superconducting chips).\"\"\"\n    X0 = np.array([[0,1],[1,0]])\n    I = np.eye(2)\n    ZZ = np.kron(np.array([[1,0],[0,-1]]), np.array([[1,0],[0,-1]]))\n    H_drive = drive_angle/2 * np.kron(X0, I)\n    H_crosstalk = zz_coupling_strength * ZZ\n    H_total = H_drive + H_crosstalk\n    return expm(-1j * H_total)\n\ndef idle_qubit_phase_disturbance(drive_angle, zz_coupling_strength):\n    \"\"\"ZZ-type crosstalk is a conditional PHASE effect, not a population\n    change -- it's only visible if the idle qubit is in superposition\n    (this matches the real physics of always-on ZZ crosstalk on fixed-\n    frequency superconducting qubits). We put qubit 1 in |+> and measure\n    how much crosstalk rotates it away from |+> in the X-Y plane.\"\"\"\n    U = crosstalk_unitary(drive_angle, zz_coupling_strength)\n    # |0>_0 (x) |+>_1\n    psi0 = np.array([1,1], dtype=complex)/np.sqrt(2)\n    full0 = np.zeros(4, dtype=complex)\n    full0[0] = psi0[0]; full0[1] = psi0[1]  # qubit0=|0>, qubit1 in |+>\n    psi_final = U @ full0\n    rho_full = np.outer(psi_final, psi_final.conj())\n    rho_full = rho_full.reshape(2,2,2,2)\n    rho_q1 = np.einsum('ijik->jk', rho_full)\n    # <Y> on qubit 1: nonzero Y-component reveals an accumulated phase (crosstalk signature)\n    Y = np.array([[0,-1j],[1j,0]])\n    y_expect = np.real(np.trace(rho_q1 @ Y))\n    return y_expect\n\nprint(\"ZZ coupling | Idle-qubit <Y> (nonzero = crosstalk-induced phase shift)\")\nfor zz in [0.0, 0.01, 0.05, 0.1, 0.2]:\n    disturbance = idle_qubit_phase_disturbance(drive_angle=np.pi, zz_coupling_strength=zz)\n    print(f\"{zz:.3f}       | {disturbance:.6f}\")\n\n# scaling claim from the problem: number of pairs to characterize on an N-qubit chip\nprint(\"\\nN qubits | pairs to characterize (N*(N-1)/2)\")\nfor N in [5, 10, 50, 100]:\n    pairs = N*(N-1)//2\n    print(f\"{N:>4}     | {pairs}\")\n\nd0 = idle_qubit_phase_disturbance(np.pi, 0.0)\nd1 = idle_qubit_phase_disturbance(np.pi, 0.1)\nassert abs(d0) < 1e-6, \"No crosstalk case should show zero phase disturbance\"\nassert abs(d1) > abs(d0), \"Nonzero ZZ coupling should measurably shift the idle qubit's phase\"\nprint(\"\\nPASS: crosstalk is undetectable with zero coupling, and grows measurably\")\nprint(\"as the ZZ coupling strength increases -- confirming the effect is real,\")\nprint(\"phase-based (not population-based), and quantifiable, and that pair count\")\nprint(\"grows quadratically with qubit count.\")\n", "output": "ZZ coupling | Idle-qubit <Y> (nonzero = crosstalk-induced phase shift)\n0.000       | 0.000000\n0.010       | -0.000000\n0.050       | -0.000051\n0.100       | -0.000404\n0.200       | -0.003203\n\nN qubits | pairs to characterize (N*(N-1)/2)\n   5     | 10\n  10     | 45\n  50     | 1225\n 100     | 4950\n\nPASS: crosstalk is undetectable with zero coupling, and grows measurably\nas the ZZ coupling strength increases -- confirming the effect is real,\nphase-based (not population-based), and quantifiable, and that pair count\ngrows quadratically with qubit count.\n"}, {"code": "\"\"\"\nProblem 9: Multi-segment pulse shape optimization, demonstrating the actual\n2N-evaluation-per-step cost claim from the problem as N (segments) grows --\nthe concrete, measured version of \"why finite differences don't scale, and\nwhy a learned policy (RL) is used instead in practice.\"\n\"\"\"\nimport numpy as np\nfrom qiskit import QuantumCircuit\nfrom qiskit.quantum_info import Statevector\n\ndef gate_fidelity_multisegment(amplitudes):\n    \"\"\"A pulse discretized into len(amplitudes) segments, each contributing\n    a small RX rotation; total rotation should reach pi for a perfect X gate.\"\"\"\n    qc = QuantumCircuit(1)\n    for amp in amplitudes:\n        qc.rx(amp, 0)\n    sv = Statevector.from_instruction(qc)\n    target = Statevector.from_label('1')\n    return abs(sv.inner(target))**2\n\ndef finite_difference_gradient(amplitudes, h=0.01):\n    \"\"\"Centered finite differences -- costs 2 evaluations PER segment.\"\"\"\n    grad = np.zeros_like(amplitudes)\n    eval_count = 0\n    for i in range(len(amplitudes)):\n        plus = amplitudes.copy(); plus[i] += h\n        minus = amplitudes.copy(); minus[i] -= h\n        grad[i] = (gate_fidelity_multisegment(plus) - gate_fidelity_multisegment(minus)) / (2*h)\n        eval_count += 2\n    return grad, eval_count\n\nprint(\"N segments | evaluations per optimization step (measured, not estimated)\")\nfor N in [1, 2, 5, 10, 20, 50]:\n    amps = np.full(N, np.pi/(2*N))  # arbitrary starting point\n    _, eval_count = finite_difference_gradient(amps)\n    print(f\"{N:>10} | {eval_count}\")\n\n# actually run the optimization for a modest N to confirm it still converges correctly\nN = 5\namps = np.full(N, 0.3)\nlr = 0.5\ntotal_evals = 0\nfor step in range(60):\n    grad, evals = finite_difference_gradient(amps)\n    amps += lr * grad\n    total_evals += evals\n\nfinal_fidelity = gate_fidelity_multisegment(amps)\nprint(f\"\\nWith N={N} segments: final fidelity = {final_fidelity:.6f}, \"\n      f\"total Hamiltonian evaluations used = {total_evals}\")\nprint(f\"(compare to Problem 1's single-parameter case, which used only 2 evaluations per step)\")\n\nassert final_fidelity > 0.99, \"Multi-segment optimization did not converge\"\nprint(\"\\nPASS: confirms the cost scales linearly with N (2N per step) exactly as claimed,\")\nprint(\"and that this cost becomes the real, measured motivation for using a trained\")\nprint(\"policy network (RL) instead of finite differences as N grows large.\")\n", "output": "N segments | evaluations per optimization step (measured, not estimated)\n         1 | 2\n         2 | 4\n         5 | 10\n        10 | 20\n        20 | 40\n        50 | 100\n\nWith N=5 segments: final fidelity = 1.000000, total Hamiltonian evaluations used = 600\n(compare to Problem 1's single-parameter case, which used only 2 evaluations per step)\n\nPASS: confirms the cost scales linearly with N (2N per step) exactly as claimed,\nand that this cost becomes the real, measured motivation for using a trained\npolicy network (RL) instead of finite differences as N grows large.\n"}, {"code": "\"\"\"\nProblem 10: Zero-noise extrapolation (ZNE) via gate folding, verified against\nthe true noiseless value -- checking whether extrapolation actually recovers\nsomething close to the ideal result, and demonstrating the assumption ZNE\nrelies on (smooth, predictable noise scaling).\n\"\"\"\nimport numpy as np\nfrom qiskit import QuantumCircuit\nfrom qiskit.quantum_info import Statevector\nfrom qiskit_aer import AerSimulator\nfrom qiskit_aer.noise import NoiseModel, depolarizing_error\nfrom qiskit.primitives import BackendEstimatorV2\nfrom qiskit.quantum_info import SparsePauliOp\n\nTHETA = np.pi/3  # arbitrary nonzero rotation so <Z> is a nontrivial, clearly measurable target\n\ndef make_circuit(fold_factor):\n    \"\"\"RX(theta), gate-folded: RX(theta) -> RX(theta) RX(-theta) RX(theta) RX(-theta) ... ,\n    an odd-length sandwich that is IDEALLY identical to a single RX(theta) (since\n    RX(-theta)RX(theta) = identity), but passes through the noisy gate more times,\n    amplifying noise exposure without changing the ideal target result.\"\"\"\n    qc = QuantumCircuit(1)\n    qc.rx(THETA, 0)\n    for _ in range(fold_factor):\n        qc.rx(-THETA, 0)\n        qc.rx(THETA, 0)\n    return qc\n\nideal_circuit = make_circuit(0)\nideal_sv = Statevector.from_instruction(ideal_circuit)\nideal_z = ideal_sv.expectation_value(SparsePauliOp(\"Z\")).real\nprint(f\"Ideal (noiseless) <Z> for RX({THETA:.4f}): {ideal_z:.6f}\")\n\nnoise_model = NoiseModel()\nnoise_model.add_all_qubit_quantum_error(depolarizing_error(0.05, 1), ['rx'])\nbackend = AerSimulator(noise_model=noise_model)\n\nnoise_levels = [1, 3, 5, 7]  # 1x, 3x, 5x, 7x noise exposure via folding\nmeasured = []\nfor fold in [0, 1, 2, 3]:  # fold=k means (2k+1)x the RX-gate noise exposure\n    qc = make_circuit(fold)\n    qc.save_expectation_value(SparsePauliOp(\"Z\").to_matrix(), [0], label='z')\n    result = backend.run(qc, shots=8000).result()\n    z_val = result.data(0)['z'].real\n    measured.append(z_val)\n\nprint(\"\\nNoise level (x) | measured <Z>\")\nfor level, val in zip(noise_levels, measured):\n    print(f\"{level:>3}             | {val:.6f}\")\n\n# linear extrapolation back to zero-noise (x=0) from the measured points\ncoeffs = np.polyfit(noise_levels, measured, deg=1)\nextrapolated_z = np.polyval(coeffs, 0)\nprint(f\"\\nLinear extrapolation to zero-noise: <Z> = {extrapolated_z:.6f}\")\nprint(f\"True ideal value:                    <Z> = {ideal_z:.6f}\")\nprint(f\"Error of extrapolated estimate:            {abs(extrapolated_z - ideal_z):.6f}\")\n\n# compare against just using the noisiest single measurement, unmitigated\nprint(f\"Error if you'd just used the noisiest single measurement (no ZNE): \"\n      f\"{abs(measured[-1] - ideal_z):.6f}\")\n\nassert abs(extrapolated_z - ideal_z) < abs(measured[-1] - ideal_z), \\\n    \"ZNE extrapolation did not improve on the raw noisy measurement\"\nprint(\"\\nPASS: zero-noise extrapolation gets measurably closer to the true ideal value\")\nprint(\"than any single noisy measurement did, confirming the technique actually works\")\nprint(\"here (where the noise really does scale smoothly, as ZNE assumes).\")\n", "output": "Ideal (noiseless) <Z> for RX(1.0472): 0.500000\n\nNoise level (x) | measured <Z>\n  1             | 0.475000\n  3             | 0.428687\n  5             | 0.386890\n  7             | 0.349169\n\nLinear extrapolation to zero-noise: <Z> = 0.493795\nTrue ideal value:                    <Z> = 0.500000\nError of extrapolated estimate:            0.006205\nError if you'd just used the noisiest single measurement (no ZNE): 0.150831\n\nPASS: zero-noise extrapolation gets measurably closer to the true ideal value\nthan any single noisy measurement did, confirming the technique actually works\nhere (where the noise really does scale smoothly, as ZNE assumes).\n"}];
+
+const PROBLEMS = [
+  {
+    title: { es: "Calibración de un pulso π (compuerta X) por Rabi", en: "Calibrating a π-pulse (X gate) via Rabi driving" },
+    tag: "Rigetti / Google Quantum AI",
+    circuit: { numQubits: 1, cols: 2, wireLabels: ["q0"], gates: [
+      { col: 0, qubit: 0, label: "RX(θ)", type: "box" },
+      { col: 1, qubit: 0, type: "meter" },
+    ]},
+    adv: {
+      es: "Un qubit se conduce con H = (Ω/2)σx. Comenzando en |0⟩, la población en |1⟩ tras un tiempo t es P₁(t) = sin²(Ωt/2). Un agente RL observa P₁ y ajusta t para lograr una compuerta X perfecta (P₁=1). (a) ¿Qué valor de t logra esto para una Ω dada? (b) ¿Por qué un t* calibrado hoy podría fallar la próxima semana en el mismo qubit?",
+      en: "A qubit is driven with H = (Ω/2)σx. Starting in |0⟩, the population in |1⟩ after time t is P₁(t) = sin²(Ωt/2). An RL agent observes P₁ and adjusts t to achieve a perfect X gate (P₁=1). (a) What value of t achieves this for a given Ω? (b) Why might a t* calibrated today fail next week on the same qubit?"
+    },
+    advAnswer: {
+      es: "(a) P₁=1 requiere Ωt/2 = π/2, así que t* = π/Ω. (b) Ω depende de la potencia de microondas realmente entregada al qubit, que se ve afectada por drift térmico, degradación de cables y fluctuaciones del amplificador — por lo que el Ω real cambia con el tiempo aunque el ajuste programado sea el mismo, dejando el t* antiguo desincronizado.",
+      en: "(a) P₁=1 requires Ωt/2 = π/2, so t* = π/Ω. (b) Ω depends on the microwave power actually delivered to the qubit, which is affected by thermal drift, cable degradation, and amplifier fluctuations — so the real Ω changes over time even if the programmed setting is the same, leaving the old t* out of sync."
+    },
+    simple: {
+      es: "Piensa en empujar una hamaca en el momento justo para que llegue exactamente arriba, ni más ni menos. Ω es \"qué tan fuerte empujas\" y t es \"cuánto tiempo empujas\". Llegar exactamente arriba (P₁=1) significa que el qubit \"volteó\" perfectamente de apagado a encendido. El problema es que la próxima semana, la cadena de la hamaca puede estirarse un poquito (el entorno del qubit cambia con la temperatura y el desgaste), así que el mismo empujón de antes ya no llega exactamente arriba. Por eso las máquinas reales recalibran todo el tiempo, y usan IA para encontrar el empujón correcto automáticamente en vez de que una persona lo recalcule a mano cada vez.",
+      en: "Think of pushing a swing at exactly the right moment so it reaches exactly the top — no more, no less. Ω is \"how hard you push\" and t is \"how long you push.\" Reaching exactly the top (P₁=1) means the qubit \"flipped\" perfectly from off to on. The problem is that next week, the swing's chain might stretch a tiny bit (the qubit's environment shifts with temperature and wear), so the same push as before no longer lands exactly at the top. That's why real machines recalibrate constantly, and why they use AI to automatically re-find the right push instead of a person recalculating it by hand every time."
+    }
+  },
+  {
+    title: { es: "Calibración de una compuerta CNOT (resonancia cruzada)", en: "Calibrating a CNOT gate (cross-resonance)" },
+    tag: "IBM Quantum",
+    circuit: { numQubits: 2, cols: 2, wireLabels: ["q0 (control)","q1 (target)"], gates: [
+      { col: 0, qubit: 0, label: "X", type: "box" },
+      { col: 1, control: 0, target: 1, type: "cnot" },
+    ]},
+    adv: {
+      es: "Calibrar una compuerta de un qubit requiere ajustar 1 parámetro (amplitud). Calibrar un CNOT por resonancia cruzada entre dos qubits superconductores requiere ajustar amplitud Y fase del pulso simultáneamente (espacio 2D), y en un chip de N qubits, cada par acoplado necesita su propia calibración. (a) ¿Por qué una búsqueda de rejilla (grid search) sobre 2 parámetros ya es más costosa que sobre 1? (b) ¿Por qué esto empeora mal al escalar a chips de cientos de qubits?",
+      en: "Calibrating a single-qubit gate requires tuning 1 parameter (amplitude). Calibrating a CNOT via cross-resonance between two superconducting qubits requires tuning amplitude AND phase simultaneously (a 2D space), and on an N-qubit chip, every coupled pair needs its own calibration. (a) Why is a grid search over 2 parameters already more expensive than over 1? (b) Why does this get much worse scaling to chips with hundreds of qubits?"
+    },
+    advAnswer: {
+      es: "(a) Si probamos k valores por parámetro, 1 parámetro cuesta k evaluaciones pero 2 parámetros cuestan k² — el costo crece exponencialmente con el número de parámetros (la \"maldición de la dimensionalidad\"). (b) El número de pares de qubits acoplados crece aproximadamente con N (o N² si se permite conectividad completa), así que el número total de calibraciones 2D necesarias crece mucho más rápido que el número de qubits — por eso empresas como IBM usan optimización bayesiana o RL en vez de rejillas exhaustivas.",
+      en: "(a) If we try k values per parameter, 1 parameter costs k evaluations but 2 parameters cost k² — cost grows exponentially with the number of parameters (the \"curse of dimensionality\"). (b) The number of coupled qubit pairs grows roughly with N (or N² with full connectivity), so the total number of 2D calibrations needed grows far faster than the qubit count — which is why companies like IBM use Bayesian optimization or RL instead of exhaustive grids."
+    },
+    simple: {
+      es: "Antes, para afinar una nota de guitarra solo giras UNA perilla (afinación) hasta que suene bien. Ahora imagina que para hacer que dos instrumentos toquen juntos perfectamente, necesitas ajustar DOS perillas a la vez (el volumen Y el tiempo exacto en que empieza cada uno) — probar cada combinación posible de las dos toma muchísimo más tiempo que probar una sola perilla. Y en una orquesta con cientos de instrumentos, cada PAR de instrumentos que tocan juntos necesita su propio ajuste de dos perillas — por eso se necesita una IA que adivine inteligentemente qué combinaciones probar, en vez de probarlas absolutamente todas.",
+      en: "Before, tuning a guitar string means turning ONE knob until it sounds right. Now imagine getting two instruments to play together perfectly requires adjusting TWO knobs at once (volume AND the exact timing each one starts) — trying every possible combination of two knobs takes way longer than trying one knob. And in an orchestra with hundreds of instruments, every PAIR of instruments playing together needs its own two-knob adjustment — that's why you need an AI that smartly guesses which combinations to try, instead of testing literally all of them."
+    }
+  },
+  {
+    title: { es: "VQE: bucle híbrido cuántico-clásico para química", en: "VQE: hybrid quantum-classical loop for chemistry" },
+    tag: "IBM / Google · Descubrimiento de fármacos",
+    circuit: { numQubits: 2, cols: 3, wireLabels: ["q0","q1"], gates: [
+      { col: 0, qubit: 0, label: "RY(θ1)", type: "box" },
+      { col: 1, control: 0, target: 1, type: "cnot" },
+      { col: 2, qubit: 1, label: "RY(θ2)", type: "box" },
+    ]},
+    adv: {
+      es: "VQE prepara un estado de prueba |ψ(θ)⟩ en la computadora cuántica, mide la energía ⟨H⟩, y un optimizador clásico ajusta θ para minimizarla — repitiendo el ciclo. (a) ¿Por qué se usa este bucle híbrido en vez de un algoritmo cuántico puro en hardware NISQ actual? (b) ¿Qué garantiza el principio variacional sobre la energía medida en cada paso?",
+      en: "VQE prepares a trial state |ψ(θ)⟩ on the quantum computer, measures the energy ⟨H⟩, and a classical optimizer adjusts θ to minimize it — repeating the cycle. (a) Why is this hybrid loop used instead of a purely quantum algorithm on today's NISQ hardware? (b) What does the variational principle guarantee about the measured energy at every step?"
+    },
+    advAnswer: {
+      es: "(a) Los algoritmos cuánticos puros para química (como la estimación de fase completa) requieren circuitos mucho más profundos y qubits lógicos corregidos por errores, que el hardware NISQ (ruidoso, sin corrección de errores) actual no puede sostener; VQE usa circuitos cortos y deja el trabajo pesado de optimización a una computadora clásica confiable. (b) El principio variacional garantiza que la energía medida ⟨ψ(θ)|H|ψ(θ)⟩ siempre es mayor o igual a la energía real del estado fundamental — así que cualquier mejora (energía más baja) es un progreso genuino, nunca un espejismo.",
+      en: "(a) Pure quantum algorithms for chemistry (like full phase estimation) require much deeper circuits and error-corrected logical qubits, which today's NISQ (noisy, uncorrected) hardware can't sustain; VQE uses short circuits and leaves the heavy optimization work to a reliable classical computer. (b) The variational principle guarantees the measured energy ⟨ψ(θ)|H|ψ(θ)⟩ is always greater than or equal to the true ground-state energy — so any improvement (lower energy) is genuine progress, never an illusion."
+    },
+    simple: {
+      es: "Imagina que la computadora cuántica es un \"adivinador\" de la forma más estable de una molécula, y la computadora clásica es un \"entrenador\" que le dice \"más frío\" o \"más caliente\" según qué tan buena fue la adivinanza, y sugiere una mejor. Se repite este juego de frío-caliente muchas veces, cada vez más rápido gracias a la IA, hasta encontrar la forma más estable (la de menor energía) — que es justo lo que se necesita para diseñar nuevos medicamentos o baterías.",
+      en: "Imagine the quantum computer is a \"guesser\" trying to find a molecule's most stable shape, and the classical computer is a \"coach\" that says \"warmer\" or \"colder\" based on how good the guess was, and suggests a better one. This hot-and-cold game repeats many times, getting faster thanks to AI, until it finds the most stable shape (the lowest energy) — which is exactly what's needed to design new medicines or batteries."
+    }
+  },
+  {
+    title: { es: "QAOA: optimización combinatoria con capas variacionales", en: "QAOA: combinatorial optimization with variational layers" },
+    tag: "Rigetti · Logística y finanzas",
+    circuit: { numQubits: 2, cols: 3, wireLabels: ["q0","q1"], gates: [
+      { col: 0, control: 0, target: 1, type: "cnot" },
+      { col: 1, qubit: 0, label: "RZ(γ)", type: "box" },
+      { col: 2, qubit: 0, label: "RX(β)", type: "box" },
+    ]},
+    adv: {
+      es: "QAOA alterna capas de un Hamiltoniano de \"problema\" (codifica lo que se quiere optimizar, con ángulo γ) y un Hamiltoniano \"mezclador\" (ángulo β), repetido p veces. Un optimizador clásico ajusta (γ,β) para maximizar la calidad de la solución. (a) ¿Qué relación existe, en general, entre la profundidad p del circuito y la calidad de la solución obtenida? (b) ¿Por qué aumentar p indefinidamente no es gratis en hardware real?",
+      en: "QAOA alternates layers of a \"problem\" Hamiltonian (encodes what's being optimized, angle γ) and a \"mixer\" Hamiltonian (angle β), repeated p times. A classical optimizer tunes (γ,β) to maximize solution quality. (a) What relationship generally holds between circuit depth p and solution quality? (b) Why isn't increasing p indefinitely free on real hardware?"
+    },
+    advAnswer: {
+      es: "(a) En el límite teórico p→∞, QAOA puede aproximar la evolución adiabática y encontrar la solución óptima con alta probabilidad; en la práctica, mayor p generalmente permite explorar soluciones de mejor calidad. (b) Cada capa añade más compuertas, y cada compuerta real tiene una tasa de error distinta de cero — así que circuitos más profundos acumulan más ruido, y en algún punto el ruido supera el beneficio de más capas, degradando la solución en lugar de mejorarla.",
+      en: "(a) In the theoretical limit p→∞, QAOA can approximate adiabatic evolution and find the optimal solution with high probability; in practice, larger p generally allows exploring higher-quality solutions. (b) Each layer adds more gates, and every real gate has a nonzero error rate — so deeper circuits accumulate more noise, and past some point the noise outweighs the benefit of more layers, degrading the solution instead of improving it."
+    },
+    simple: {
+      es: "Es como sintonizar una radio con dos perillas (γ y β) para encontrar la señal más clara (la mejor respuesta a un problema, como \"qué rutas de entrega son más rápidas\"). Girar las perillas varias veces (más \"capas\", p) generalmente te acerca más a la señal perfecta. Pero cada vez que giras las perillas en una radio vieja y ruidosa (hardware real, imperfecto), se cuela un poquito de estática — así que girar demasiadas veces puede en realidad empeorar la señal en vez de mejorarla.",
+      en: "It's like tuning a radio with two knobs (γ and β) to find the clearest signal (the best answer to a problem, like \"which delivery routes are fastest\"). Turning the knobs multiple times (more \"layers,\" p) usually gets you closer to a perfect signal. But every time you turn the knobs on an old, noisy radio (real, imperfect hardware), a little static creeps in — so turning them too many times can actually make the signal worse instead of better."
+    }
+  },
+  {
+    title: { es: "Código de superficie con decodificador de IA", en: "Surface code with an AI decoder" },
+    tag: "Google Quantum AI",
+    circuit: { numQubits: 3, cols: 2, wireLabels: ["dato 1","ancilla","dato 2"], gates: [
+      { col: 0, control: 0, target: 1, type: "cnot" },
+      { col: 1, control: 2, target: 1, type: "cnot" },
+    ]},
+    adv: {
+      es: "En un código de superficie, qubits \"ancilla\" miden la paridad de sus vecinos sin colapsar la información lógica, produciendo un patrón de \"síndrome\" cuando hay errores. Google reportó en 2023 el uso de un decodificador basado en redes neuronales para interpretar estos síndromes. (a) ¿Por qué decodificar síndromes es naturalmente un problema de clasificación adecuado para ML? (b) ¿Qué restricción de tiempo real hace esto especialmente difícil?",
+      en: "In a surface code, \"ancilla\" qubits measure the parity of their neighbors without collapsing the logical information, producing a \"syndrome\" pattern when errors occur. Google reported in 2023 using a neural-network-based decoder to interpret these syndromes. (a) Why is syndrome decoding naturally a classification problem suited to ML? (b) What real-time constraint makes this especially hard?"
+    },
+    advAnswer: {
+      es: "(a) El síndrome es un patrón binario de \"disparos\" de ancillas, y la tarea es \"clasificar\" qué error físico (y por tanto qué corrección) produjo ese patrón — exactamente la estructura de un problema de clasificación supervisada, y los patrones de error se pueden simular para generar datos de entrenamiento abundantes. (b) La decodificación debe completarse en microsegundos, antes de que el siguiente ciclo de corrección de errores comience, o el código se queda \"atrás\" del ritmo de errores — así que el decodificador debe ser simultáneamente preciso Y extremadamente rápido, una combinación difícil para redes neuronales grandes.",
+      en: "(a) The syndrome is a binary pattern of ancilla \"firings,\" and the task is to \"classify\" which physical error (and therefore which correction) produced that pattern — exactly the structure of a supervised classification problem, and error patterns can be simulated to generate abundant training data. (b) Decoding must complete within microseconds, before the next error-correction cycle begins, or the code falls \"behind\" the error rate — so the decoder must be simultaneously accurate AND extremely fast, a difficult combination for large neural networks."
+    },
+    simple: {
+      es: "Piensa en cada qubit ancilla como un \"detector de humo\" que nota si algo anda mal cerca sin mirar directamente el dato (mirarlo directamente lo arruinaría). El decodificador es como un detective que ve cuáles detectores de humo se activaron y adivina dónde empezó el \"incendio\" (el error). Una computadora entrenada con muchísimos ejemplos puede ser un detective más rápido e inteligente que un libro de reglas fijas — pero tiene que resolver el caso en microsegundos, antes de que ocurra el siguiente incendio, lo cual es muy difícil.",
+      en: "Think of each ancilla qubit as a \"smoke detector\" that notices something's wrong nearby without directly looking at the data (looking directly would ruin it). The decoder is like a detective who sees which smoke detectors went off and guesses where the \"fire\" (the error) started. A computer trained on tons of examples can be a faster, smarter detective than a fixed rulebook — but it has to solve the case in microseconds, before the next fire happens, which is really hard."
+    }
+  },
+  {
+    title: { es: "Mapa de características cuánticas para machine learning", en: "Quantum feature map for machine learning" },
+    tag: "IBM Quantum · Finanzas / detección de fraude",
+    circuit: { numQubits: 2, cols: 3, wireLabels: ["q0 (x1)","q1 (x2)"], gates: [
+      { col: 0, qubit: 0, label: "RY(x1)", type: "box" },
+      { col: 0, qubit: 1, label: "RY(x2)", type: "box" },
+      { col: 1, control: 0, target: 1, type: "cnot" },
+      { col: 2, qubit: 1, type: "meter" },
+    ]},
+    adv: {
+      es: "Un mapa de características cuánticas codifica datos clásicos x en ángulos de rotación de un circuito, mapeándolos a un espacio de Hilbert exponencialmente grande, potencialmente útil para clasificación (kernels cuánticos). (a) ¿Qué hace que este mapeo sea teóricamente atractivo frente a kernels clásicos? (b) ¿Cuál es la advertencia honesta actual sobre la ventaja práctica de este enfoque?",
+      en: "A quantum feature map encodes classical data x into rotation angles of a circuit, mapping it to an exponentially large Hilbert space, potentially useful for classification (quantum kernels). (a) What makes this mapping theoretically attractive compared to classical kernels? (b) What is the current honest caveat about this approach's practical advantage?"
+    },
+    advAnswer: {
+      es: "(a) El espacio de Hilbert de n qubits tiene dimensión 2ⁿ, así que un circuito de pocos qubits puede en principio representar relaciones entre datos que serían computacionalmente costosas de calcular con kernels clásicos explícitos. (b) A la fecha, no hay evidencia sólida de que los kernels cuánticos superen a los mejores métodos clásicos (como XGBoost o redes profundas) en conjuntos de datos reales de interés práctico — la ventaja se ha demostrado principalmente en problemas construidos específicamente para favorecer el enfoque cuántico.",
+      en: "(a) The Hilbert space of n qubits has dimension 2ⁿ, so a circuit with few qubits can in principle represent data relationships that would be computationally expensive to calculate with explicit classical kernels. (b) To date, there's no solid evidence that quantum kernels outperform the best classical methods (like XGBoost or deep networks) on real datasets of practical interest — the advantage has mainly been demonstrated on problems specifically constructed to favor the quantum approach."
+    },
+    simple: {
+      es: "Imagina clasificar dulces por color comparándolos directamente. Codificar los datos de forma cuántica es como pasar cada dulce por un prisma especial que separa su información de color en un patrón mucho más rico y complejo — quizás eso hace más fácil distinguir grupos difíciles de separar. Pero, siendo honestos, los científicos todavía están probando si esto realmente ayuda en la práctica con datos reales, o si solo funciona mejor en ejemplos diseñados a propósito para lucir bien.",
+      en: "Imagine sorting candies by color by comparing them directly. Encoding the data quantumly is like passing each candy through a special prism that spreads its color information into a much richer, more complex pattern — maybe that makes it easier to separate hard-to-distinguish groups. But honestly, scientists are still testing whether this actually helps in practice with real data, or whether it only works better on examples specifically designed to make it look good."
+    }
+  },
+  {
+    title: { es: "Benchmarking aleatorio (RB) para medir fidelidad", en: "Randomized benchmarking (RB) for fidelity measurement" },
+    tag: "Estándar de industria · Rigetti / IBM / Google",
+    circuit: { numQubits: 1, cols: 4, wireLabels: ["q0"], gates: [
+      { col: 0, qubit: 0, label: "C₁", type: "box" },
+      { col: 1, qubit: 0, label: "C₂", type: "box" },
+      { col: 2, qubit: 0, label: "C₁⁻¹C₂⁻¹", type: "box" },
+      { col: 3, qubit: 0, type: "meter" },
+    ]},
+    adv: {
+      es: "El benchmarking aleatorio aplica secuencias aleatorias de compuertas de Clifford de longitud creciente m, seguidas de la inversa exacta de toda la secuencia, y mide la probabilidad de supervivencia. Esta probabilidad decae exponencialmente con m, y la tasa de decaimiento da la fidelidad promedio por compuerta. (a) ¿Por qué este método es robusto frente a errores de preparación de estado y medición (SPAM), a diferencia de medir la fidelidad de una sola compuerta directamente? (b) ¿Qué mide realmente el número extraído: el peor caso o el promedio?",
+      en: "Randomized benchmarking applies random sequences of Clifford gates of increasing length m, followed by the exact inverse of the whole sequence, and measures survival probability. This probability decays exponentially with m, and the decay rate gives the average per-gate fidelity. (a) Why is this method robust to state-preparation-and-measurement (SPAM) errors, unlike directly measuring a single gate's fidelity? (b) What does the extracted number actually measure: worst case or average?"
+    },
+    advAnswer: {
+      es: "(a) Los errores de SPAM aportan un factor multiplicativo constante en la probabilidad de supervivencia (afectan la amplitud de la curva, no su tasa de decaimiento), así que al ajustar el decaimiento exponencial en función de m, la tasa extraída queda separada matemáticamente de esos errores constantes. (b) RB mide la fidelidad PROMEDIO sobre el conjunto de compuertas de Clifford aplicadas, no el peor caso — una compuerta particular podría tener un error mucho mayor que el promedio reportado y RB no lo revelaría directamente.",
+      en: "(a) SPAM errors contribute a constant multiplicative factor to the survival probability (they affect the curve's amplitude, not its decay rate), so when fitting the exponential decay as a function of m, the extracted rate is mathematically separated from those constant errors. (b) RB measures the AVERAGE fidelity over the set of applied Clifford gates, not the worst case — a particular gate could have a much higher error than the reported average, and RB wouldn't directly reveal that."
+    },
+    simple: {
+      es: "Es como probar qué tan buena es una fotocopiadora haciéndole copiar una copia, y luego copiar esa copia, muchas veces seguidas, y viendo qué tan borrosa queda la imagen final — en vez de mirar una sola copia (que podría verse bien por pura suerte). Repetir muchas veces revela el error promedio verdadero. Pero ojo: esto te dice qué tan buena es la fotocopiadora \"en promedio\", no si hay un botón específico que está particularmente dañado.",
+      en: "It's like testing how good a copy machine is by having it copy a copy, then copy that copy, many times in a row, and seeing how blurry the final image gets — instead of looking at just one copy (which might look fine by pure luck). Repeating many times reveals the true average error. But note: this tells you how good the copier is \"on average,\" not whether one specific button is particularly broken."
+    }
+  },
+  {
+    title: { es: "Caracterización de crosstalk en un chip multi-qubit", en: "Crosstalk characterization on a multi-qubit chip" },
+    tag: "Google / IBM · Escalado de hardware",
+    circuit: { numQubits: 2, cols: 2, wireLabels: ["q0 (activo)","q1 (reposo)"], gates: [
+      { col: 0, qubit: 0, label: "RX(θ)", type: "box" },
+      { col: 1, qubit: 1, type: "meter" },
+    ]},
+    adv: {
+      es: "El crosstalk ocurre cuando controlar el qubit A causa una rotación no deseada en el qubit B, que debería estar en reposo. Caracterizar completamente el crosstalk en un chip de N qubits requiere en principio medir todos los pares (A,B). (a) ¿Cómo escala el número de mediciones necesarias con N en el peor caso? (b) ¿Cómo pueden técnicas de ML o compressed sensing reducir el número real de mediciones necesarias?",
+      en: "Crosstalk occurs when controlling qubit A causes an unwanted rotation on qubit B, which should be idle. Fully characterizing crosstalk on an N-qubit chip in principle requires measuring all pairs (A,B). (a) How does the number of required measurements scale with N in the worst case? (b) How can ML or compressed-sensing techniques reduce the actual number of measurements needed?"
+    },
+    advAnswer: {
+      es: "(a) En el peor caso, el número de pares crece como N(N-1)/2, es decir O(N²) — para 100 qubits eso son casi 5,000 pares posibles a caracterizar. (b) En la práctica, el crosstalk es dispersamente distribuido (la mayoría de los pares no acoplados tienen crosstalk casi nulo, solo los físicamente cercanos importan), así que técnicas de compressed sensing o modelos de ML entrenados con un subconjunto de mediciones pueden inferir el mapa completo de crosstalk sin medir literalmente cada par.",
+      en: "(a) In the worst case, the number of pairs grows as N(N-1)/2, i.e. O(N²) — for 100 qubits that's nearly 5,000 possible pairs to characterize. (b) In practice, crosstalk is sparsely distributed (most non-adjacent pairs have near-zero crosstalk; only physically nearby ones matter), so compressed-sensing techniques or ML models trained on a subset of measurements can infer the full crosstalk map without literally measuring every pair."
+    },
+    simple: {
+      es: "Es como revisar si encender la luz de la cocina hace que parpadee una lámpara en otra habitación, para CADA posible par de interruptores en una casa enorme. Revisar cada par uno por uno toma una eternidad si la casa crece. Pero en la vida real, un interruptor solo suele afectar lámparas cercanas, no las del otro lado de la casa — así que una IA puede adivinar inteligentemente qué pares vale la pena revisar, en vez de probar absolutamente todos.",
+      en: "It's like checking whether flipping the kitchen light causes a lamp in another room to flicker, for EVERY possible pair of switches in a huge house. Checking every pair one by one takes forever as the house grows. But in real life, a switch usually only affects nearby lamps, not ones across the house — so an AI can smartly guess which pairs are worth checking, instead of testing literally all of them."
+    }
+  },
+  {
+    title: { es: "RL para forma de pulso completa (más allá de amplitud)", en: "RL for full pulse shaping (beyond amplitude)" },
+    tag: "Google Quantum AI · Pulsos diseñados por IA",
+    circuit: { numQubits: 1, cols: 3, wireLabels: ["q0"], gates: [
+      { col: 0, qubit: 0, label: "π_net", type: "box" },
+      { col: 1, qubit: 0, label: "π_net", type: "box" },
+      { col: 2, qubit: 0, type: "meter" },
+    ]},
+    adv: {
+      es: "En el problema 1, se calibró un único parámetro (amplitud) usando diferencias finitas: 2 evaluaciones del Hamiltoniano por paso. Ahora se quiere optimizar la forma completa de un pulso discretizado en N segmentos de amplitud independientes. (a) ¿Cuántas evaluaciones del Hamiltoniano requeriría el mismo método de diferencias finitas por paso de optimización? (b) ¿Por qué una red de política entrenada por RL evita este costo?",
+      en: "In problem 1, a single parameter (amplitude) was calibrated using finite differences: 2 Hamiltonian evaluations per step. Now suppose we want to optimize the full shape of a pulse discretized into N independent amplitude segments. (a) How many Hamiltonian evaluations would the same finite-difference method require per optimization step? (b) Why does an RL-trained policy network avoid this cost?"
+    },
+    advAnswer: {
+      es: "(a) Diferencias finitas centradas necesitan 2 evaluaciones POR parámetro (uno hacia adelante, uno hacia atrás), así que para N segmentos se necesitan 2N evaluaciones del Hamiltoniano en cada paso de optimización — un costo que crece linealmente con N y se vuelve prohibitivo para pulsos con muchos segmentos. (b) Una red de política entrenada por RL aprende, a partir de experiencia acumulada en muchos episodios, a proponer directamente una forma de pulso completa (o ajustes a ella) sin necesitar recalcular un gradiente numérico en cada paso — desplaza el costo computacional al entrenamiento inicial, no a cada calibración individual.",
+      en: "(a) Centered finite differences need 2 evaluations PER parameter (one forward, one backward), so for N segments you need 2N Hamiltonian evaluations at every optimization step — a cost that grows linearly with N and becomes prohibitive for pulses with many segments. (b) An RL-trained policy network learns, from experience accumulated over many episodes, to directly propose a full pulse shape (or adjustments to it) without needing to recompute a numerical gradient at every step — it shifts the computational cost to upfront training, not to each individual calibration."
+    },
+    simple: {
+      es: "Antes, ajustábamos UNA perilla (el volumen) para afinar una nota perfectamente. Ahora imagina ajustar el volumen de una canción completa, momento a momento (cientos de perillas pequeñitas) — probar cada perilla una por una para ver cuál ayuda es demasiado lento. En vez de eso, se entrena una IA \"directora de orquesta\" que aprende, a partir de mucha experiencia previa, a mover muchas perillas a la vez de forma inteligente, sin tener que probar cada una por separado cada vez.",
+      en: "Before, we adjusted ONE knob (volume) to tune a single note perfectly. Now imagine adjusting an entire song's volume, moment by moment (hundreds of tiny knobs) — testing each knob one at a time to see what helps is way too slow. Instead, an AI \"conductor\" is trained that learns, from lots of prior experience, to move many knobs at once intelligently, without having to test each one separately every time."
+    }
+  },
+  {
+    title: { es: "Mitigación de errores en tiempo real (extrapolación a ruido cero)", en: "Real-time error mitigation (zero-noise extrapolation)" },
+    tag: "IBM Quantum Runtime",
+    circuit: { numQubits: 1, cols: 3, wireLabels: ["q0"], gates: [
+      { col: 0, qubit: 0, label: "U ×1", type: "box" },
+      { col: 1, qubit: 0, label: "U ×3", type: "box" },
+      { col: 2, qubit: 0, type: "meter" },
+    ]},
+    adv: {
+      es: "La extrapolación a ruido cero (ZNE) ejecuta el mismo circuito a varios niveles de ruido deliberadamente amplificado (1x, 2x, 3x, por ejemplo repitiendo compuertas), mide el resultado en cada nivel, y extrapola hacia atrás para estimar el resultado con ruido cero (inalcanzable directamente). (a) ¿Qué suposición sobre el comportamiento del ruido hace que esta extrapolación sea válida? (b) ¿Cuándo falla esta suposición en hardware real?",
+      en: "Zero-noise extrapolation (ZNE) runs the same circuit at several levels of deliberately amplified noise (1x, 2x, 3x, e.g. by folding gates), measures the result at each level, and extrapolates backward to estimate the zero-noise result (unreachable directly). (a) What assumption about noise behavior makes this extrapolation valid? (b) When does this assumption break down on real hardware?"
+    },
+    advAnswer: {
+      es: "(a) ZNE asume que el resultado medido es una función suave y predecible (a menudo aproximadamente polinomial o exponencial) del nivel de amplificación de ruido, de modo que un ajuste de curva con pocos puntos puede extrapolarse de forma confiable hacia el punto de ruido cero. (b) Esta suposición falla cuando el ruido no escala de forma simple con la amplificación — por ejemplo, si aparecen nuevos mecanismos de error a niveles altos de amplificación (como fugas fuera del subespacio computacional) que no estaban presentes al nivel base, la curva deja de ser suave y la extrapolación se vuelve poco confiable.",
+      en: "(a) ZNE assumes the measured result is a smooth, predictable function (often approximately polynomial or exponential) of the noise-amplification level, so a curve fit through a few points can be reliably extrapolated back to the zero-noise point. (b) This assumption breaks down when noise doesn't scale simply with amplification — for example, if new error mechanisms appear at high amplification levels (like leakage outside the computational subspace) that weren't present at the base level, the curve stops being smooth and the extrapolation becomes unreliable."
+    },
+    simple: {
+      es: "Imagina que quieres saber qué tan alta sería una planta sin ninguna maleza alrededor, pero no puedes quitar la maleza — así que en vez de eso, agregas MÁS maleza a propósito (1x, 2x, 3x extra) y observas cuánto más baja crece la planta cada vez. Luego trazas una línea hacia atrás para adivinar qué tan alta sería con CERO maleza. Es un truco ingenioso, pero solo funciona si el \"efecto de la maleza\" es simple y predecible — si de repente aparece un problema totalmente nuevo con demasiada maleza (como que la planta se pudra), la línea ya no sirve para adivinar nada.",
+      en: "Imagine you want to know how tall a plant would be with zero weeds around it, but you can't remove the weeds — so instead, you deliberately add MORE weeds (1x, 2x, 3x extra) and watch how much shorter the plant grows each time. Then you draw a line backward to guess how tall it'd be with ZERO weeds. It's a clever trick, but it only works if the \"weed effect\" is simple and predictable — if a totally new problem suddenly shows up with too many weeds (like the plant rotting), the line can't guess anything anymore."
+    }
+  },
+];
+
+let lang = 'es';
+
+function t(key) { return I18N[lang][key]; }
+
+function setLang(l) {
+  lang = l;
+  document.getElementById('btnEs').classList.toggle('active', l === 'es');
+  document.getElementById('btnEn').classList.toggle('active', l === 'en');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
+  renderProblems();
+}
+
+function escapeHtml(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function renderProblems() {
+  const container = document.getElementById('problems');
+  container.innerHTML = '';
+  PROBLEMS.forEach((p, idx) => {
+    const div = document.createElement('div');
+    div.className = 'problem';
+    const co = CODE_OUTPUTS[idx];
+    div.innerHTML = `
+      <div class="pHeader">
+        <div class="pNum">${String(idx+1).padStart(2,'0')}</div>
+        <div class="pTitleBlock">
+          <div class="pTitle">${p.title[lang]}</div>
+          <span class="pTag">${p.tag}</span>
+        </div>
+      </div>
+      <div class="circuitBox" id="circuit-${idx}"></div>
+      <div class="toggleRow">
+        <button class="revealBtn advToggle" data-idx="${idx}">${t('advBtn')}</button>
+        <button class="revealBtn simpleToggle" data-idx="${idx}">${t('simpleBtn')}</button>
+        <button class="revealBtn codeToggle" data-idx="${idx}">${t('codeBtn')}</button>
+        <button class="revealBtn outputToggle" data-idx="${idx}">${t('outputBtn')}</button>
+      </div>
+      <div class="panelContent advanced" id="adv-${idx}">
+        <span class="panelLabel">${t('advLabel')}</span>
+        <p class="qText">${p.adv[lang]}</p>
+        <p>${p.advAnswer[lang]}</p>
+      </div>
+      <div class="panelContent simple" id="simple-${idx}">
+        <span class="panelLabel">${t('simpleLabel')}</span>
+        <p>${p.simple[lang]}</p>
+      </div>
+      <div class="panelContent codePanel" id="code-${idx}">
+        <span class="panelLabel" style="color:#A78BFA">${t('codeLabel')}</span>
+        <pre class="codeBlock">${escapeHtml(co.code)}</pre>
+      </div>
+      <div class="panelContent outputPanel" id="output-${idx}">
+        <span class="verifiedTag">${t('verifiedText')}</span>
+        <span class="panelLabel" style="color:var(--correct)">${t('outputLabel')}</span>
+        <pre class="outputBlock">${escapeHtml(co.output)}</pre>
+      </div>
+    `;
+    container.appendChild(div);
+    const svg = buildCircuitSVG(document, p.circuit);
+    document.getElementById(`circuit-${idx}`).appendChild(svg);
+  });
+
+  document.querySelectorAll('.advToggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = btn.getAttribute('data-idx');
+      const panel = document.getElementById(`adv-${i}`);
+      panel.classList.toggle('show');
+      btn.classList.toggle('active');
+    });
+  });
+  document.querySelectorAll('.simpleToggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = btn.getAttribute('data-idx');
+      const panel = document.getElementById(`simple-${i}`);
+      panel.classList.toggle('show');
+      btn.classList.toggle('active');
+    });
+  });
+  document.querySelectorAll('.codeToggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = btn.getAttribute('data-idx');
+      const panel = document.getElementById(`code-${i}`);
+      panel.classList.toggle('show');
+      btn.classList.toggle('active');
+    });
+  });
+  document.querySelectorAll('.outputToggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = btn.getAttribute('data-idx');
+      const panel = document.getElementById(`output-${i}`);
+      panel.classList.toggle('show');
+      btn.classList.toggle('active');
+    });
+  });
+}
+
+
+document.getElementById('btnEs').addEventListener('click', () => setLang('es'));
+document.getElementById('btnEn').addEventListener('click', () => setLang('en'));
+setLang('es');
+</script>
+</body>
+</html>

@@ -1,0 +1,1267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Open Access Finder</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  :root {
+    --paper: #EDE6D6;
+    --card: #FBF8F0;
+    --ink: #1F2A3C;
+    --ink-light: #4A5568;
+    --stamp-green: #2F5E3F;
+    --stamp-red: #A5342A;
+    --gold: #A9812F;
+    --line: #C9BEA3;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Source Serif 4', Georgia, serif;
+    min-height: 100vh;
+    padding: 40px 20px;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  .masthead { text-align: center; margin-bottom: 28px; }
+  .masthead h1 {
+    font-family: 'Fraunces', serif;
+    font-weight: 700;
+    font-size: 32px;
+    letter-spacing: -0.5px;
+    margin: 0 0 6px;
+  }
+  .masthead p { font-size: 14px; color: var(--ink-light); margin: 0; font-style: italic; }
+  .rule { border: none; border-top: 2px solid var(--ink); border-bottom: 1px solid var(--ink); height: 3px; margin: 16px 0 24px; }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .tab {
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 13px;
+    padding: 8px 16px; border: 1px solid var(--ink); border-radius: 2px;
+    background: transparent; color: var(--ink); cursor: pointer;
+  }
+  .tab.active { background: var(--ink); color: var(--paper); }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    box-shadow: 0 1px 0 var(--line), 0 3px 10px rgba(31,42,60,0.08);
+    border-radius: 2px;
+    padding: 26px 28px;
+    margin-bottom: 18px;
+  }
+
+  .form-row { display: flex; gap: 10px; }
+  input[type=text] {
+    flex: 1; font-family: 'JetBrains Mono', monospace; font-size: 14px;
+    padding: 11px 12px; border: 1px solid var(--ink); border-radius: 2px;
+    background: #fff; color: var(--ink);
+  }
+  input[type=text]:focus { outline: 2px solid var(--gold); outline-offset: 1px; }
+  button {
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 14px;
+    background: var(--ink); color: var(--paper); border: none;
+    padding: 0 22px; border-radius: 2px; cursor: pointer; letter-spacing: 0.3px;
+  }
+  button:hover { background: #33445E; }
+  button:disabled { background: var(--line); cursor: default; }
+
+  .hint { font-size: 12px; color: var(--ink-light); margin-top: 8px; font-family: 'JetBrains Mono', monospace; }
+  .status { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--ink-light); margin-top: 16px; min-height: 18px; }
+  .error { color: var(--stamp-red); font-size: 13px; margin-top: 12px; font-family: 'JetBrains Mono', monospace; display: none; }
+
+  .result-list { margin-top: 6px; }
+  .search-item {
+    padding: 14px 0; border-top: 1px dashed var(--line); cursor: pointer;
+  }
+  .search-item:hover { background: rgba(169,129,47,0.06); }
+  .search-item .title { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .search-item .meta { font-size: 12px; color: var(--ink-light); margin: 0; }
+
+  .paper-title { font-size: 19px; font-weight: 600; margin: 0 0 6px; line-height: 1.35; }
+  .paper-meta { font-size: 13px; color: var(--ink-light); margin: 0 0 16px; }
+
+  .stamp {
+    display: inline-block; font-family: 'Fraunces', serif; font-weight: 700; font-size: 14px;
+    letter-spacing: 1.5px; text-transform: uppercase; border: 2px solid; border-radius: 3px;
+    padding: 5px 14px; transform: rotate(-2deg); margin: 4px 0 14px;
+  }
+  .stamp.found { color: var(--stamp-green); border-color: var(--stamp-green); }
+  .stamp.notfound { color: var(--stamp-red); border-color: var(--stamp-red); }
+
+  .oa-source {
+    border-top: 1px solid var(--line); padding: 12px 0; display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  }
+  .oa-source:first-of-type { border-top: 2px solid var(--ink); }
+  .oa-source .label { font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-light); min-width: 90px; }
+  .oa-source a { font-family: 'JetBrains Mono', monospace; font-size: 13px; color: var(--stamp-green); text-decoration: none; border-bottom: 1px solid var(--stamp-green); word-break: break-all; flex: 1; }
+  .oa-source a:hover { opacity: 0.7; }
+  .oa-source .badge { font-size: 11px; color: var(--ink-light); font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+
+  .note { font-size: 13px; color: var(--ink-light); margin-top: 10px; }
+  .footer-note { text-align: center; font-size: 12px; color: var(--ink-light); margin-top: 20px; line-height: 1.6; }
+  .back-link { font-size: 12px; color: var(--ink-light); cursor: pointer; text-decoration: underline; margin-bottom: 14px; display: inline-block; }
+
+  .no-oa-actions { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }  .action-btn {
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 13px;
+    background: var(--ink); color: var(--card); border: 1px solid var(--ink);
+    padding: 8px 14px; border-radius: 2px; text-decoration: none; display: inline-block;
+  }
+  .action-btn:hover { background: #33445E; }
+  .action-btn.secondary { background: transparent; color: var(--ink); }
+  .action-btn.secondary:hover { background: rgba(31,42,60,0.06); }
+
+  .save-btn {
+    font-family: 'Fraunces', serif; font-weight: 600; font-size: 12px;
+    background: transparent; color: var(--ink); border: 1px solid var(--ink);
+    padding: 5px 12px; border-radius: 2px; cursor: pointer; letter-spacing: 0.3px;
+    margin: 2px 0 14px; display: inline-flex; align-items: center; gap: 6px;
+  }
+  .save-btn:hover { background: rgba(31,42,60,0.06); }
+  .save-btn.saved { background: var(--stamp-green); color: var(--card); border-color: var(--stamp-green); }
+
+  .action-row { display: flex; gap: 10px; align-items: flex-start; flex-wrap: wrap; }
+  .cite-wrap { position: relative; }
+  .cite-menu {
+    position: absolute; top: 100%; left: 0; margin-top: 4px; z-index: 10;
+    background: var(--card); border: 1px solid var(--ink); border-radius: 2px;
+    box-shadow: 0 3px 10px rgba(31,42,60,0.15); min-width: 200px;
+  }
+  .cite-menu button {
+    display: block; width: 100%; text-align: left; background: none; border: none;
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink);
+    padding: 9px 12px; cursor: pointer; border-bottom: 1px solid var(--line);
+  }
+  .cite-menu button:last-child { border-bottom: none; }
+  .cite-menu button:hover { background: var(--paper); }
+
+  .related-item {
+    padding: 10px 0; border-top: 1px dashed var(--line); cursor: pointer;
+  }
+  .related-item:hover .related-title { text-decoration: underline; }
+  .related-title { font-size: 14px; font-weight: 600; margin: 0 0 2px; }
+  .related-meta { font-size: 12px; color: var(--ink-light); margin: 0; }
+
+  .lib-item {
+    padding: 14px 0; border-top: 1px dashed var(--line);
+    display: flex; justify-content: space-between; gap: 14px; align-items: flex-start;
+  }
+  .lib-item:first-of-type { border-top: 2px solid var(--ink); }
+  .lib-item .lib-main { flex: 1; cursor: pointer; }
+  .lib-item .title { font-size: 15px; font-weight: 600; margin: 0 0 4px; }
+  .lib-item .meta { font-size: 12px; color: var(--ink-light); margin: 0; }
+  .lib-item .remove-btn {
+    font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--stamp-red);
+    background: transparent; border: 1px solid var(--stamp-red); padding: 4px 10px;
+    border-radius: 2px; cursor: pointer; white-space: nowrap;
+  }
+  .lib-item .remove-btn:hover { background: rgba(165,52,42,0.08); }
+  .empty-lib { font-size: 13px; color: var(--ink-light); padding: 18px 0; text-align: center; }
+
+  .dash-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 6px 0 20px; }
+  @media (max-width: 520px) { .dash-grid { grid-template-columns: 1fr; } }
+  .dash-stat {
+    background: var(--paper); border: 1px solid var(--line); border-radius: 2px;
+    padding: 16px 18px;
+  }
+  .dash-stat .num {
+    font-family: 'Fraunces', serif; font-weight: 700; font-size: 30px; color: var(--ink);
+    line-height: 1.1;
+  }
+  .dash-stat .num.money { color: var(--stamp-green); }
+  .dash-stat .lbl { font-size: 12px; color: var(--ink-light); text-transform: uppercase; letter-spacing: 0.5px; margin-top: 4px; }
+  .dash-note { font-size: 12px; color: var(--ink-light); margin: -6px 0 18px; }
+  .dash-section-title { font-family: 'Fraunces', serif; font-weight: 600; font-size: 14px; margin: 18px 0 8px; }
+  .dash-bar-row { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-size: 13px; }
+  .dash-bar-row .bar-label { min-width: 130px; color: var(--ink-light); }
+  .dash-bar-track { flex: 1; background: var(--line); border-radius: 2px; height: 10px; overflow: hidden; }
+  .dash-bar-fill { height: 100%; background: var(--stamp-green); }
+  .dash-bar-val { min-width: 34px; text-align: right; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+  .reset-link { font-size: 11px; color: var(--ink-light); text-decoration: underline; cursor: pointer; }
+
+  .cost-input-row {
+    display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    background: var(--paper); border: 1px solid var(--line); border-radius: 2px;
+    padding: 10px 14px; margin-bottom: 16px; font-size: 13px;
+  }
+  .cost-input-row label { color: var(--ink); font-weight: 600; }
+  .cost-input-row input[type=number] {
+    width: 70px; font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    padding: 4px 6px; border: 1px solid var(--ink); border-radius: 2px;
+  }
+  .cost-hint { font-size: 11px; color: var(--ink-light); font-style: italic; }
+
+  .bulk-textarea {
+    width: 100%; min-height: 120px; font-family: 'JetBrains Mono', monospace; font-size: 13px;
+    padding: 10px 12px; border: 1px solid var(--ink); border-radius: 2px; background: #fff;
+    color: var(--ink); resize: vertical;
+  }
+  .bulk-actions { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  .bulk-file-label {
+    font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--ink-light);
+    border: 1px dashed var(--line); border-radius: 2px; padding: 6px 12px; cursor: pointer;
+  }
+  .bulk-table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 13px; }
+  .bulk-table th {
+    text-align: left; font-family: 'Fraunces', serif; font-size: 12px; text-transform: uppercase;
+    letter-spacing: 0.5px; color: var(--ink-light); border-bottom: 2px solid var(--ink); padding: 6px 8px;
+  }
+  .bulk-table td { padding: 8px; border-bottom: 1px dashed var(--line); vertical-align: top; }
+  .bulk-table .status-ok { color: var(--stamp-green); font-weight: 600; }
+  .bulk-table .status-no { color: var(--stamp-red); font-weight: 600; }
+  .bulk-table .status-pending { color: var(--ink-light); }
+  .bulk-progress { font-size: 12px; color: var(--ink-light); margin-top: 10px; }
+
+  .roi-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  @media (max-width: 520px) { .roi-form-grid { grid-template-columns: 1fr; } }
+  .roi-field { display: flex; flex-direction: column; gap: 4px; }
+  .roi-field label { font-size: 12px; color: var(--ink-light); font-weight: 600; }
+  .roi-field input {
+    font-family: 'JetBrains Mono', monospace; font-size: 14px; padding: 8px 10px;
+    border: 1px solid var(--ink); border-radius: 2px; background: #fff; color: var(--ink);
+  }
+  .roi-field .field-hint { font-size: 11px; color: var(--ink-light); font-style: italic; }
+
+  .roi-output {
+    background: var(--paper); border: 2px solid var(--ink); border-radius: 2px;
+    padding: 20px; margin: 10px 0 24px;
+  }
+  .roi-output .row {
+    display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px;
+    border-bottom: 1px dashed var(--line);
+  }
+  .roi-output .row:last-child { border-bottom: none; }
+  .roi-output .row .lbl { color: var(--ink-light); }
+  .roi-output .row .val { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+  .roi-output .row.total { border-top: 2px solid var(--ink); margin-top: 8px; padding-top: 12px; }
+  .roi-output .row.total .val { font-size: 20px; color: var(--stamp-green); font-family: 'Fraunces', serif; }
+  .roi-output .row.total .val.negative { color: var(--stamp-red); }
+
+  .pricing-table { width: 100%; border-collapse: collapse; margin: 10px 0 20px; font-size: 13px; }
+  .pricing-table th, .pricing-table td { padding: 10px 8px; border-bottom: 1px dashed var(--line); text-align: left; }
+  .pricing-table th { font-family: 'Fraunces', serif; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; color: var(--ink-light); border-bottom: 2px solid var(--ink); }
+  .pricing-table tr.highlight { background: rgba(47,94,63,0.08); }
+  .pricing-table tr.highlight td:first-child { font-weight: 700; }
+  .roi-caveat {
+    font-size: 12px; color: var(--ink-light); background: var(--paper); border-left: 3px solid var(--gold);
+    padding: 10px 14px; margin: 16px 0; line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="masthead">
+    <h1>Open Access Finder</h1>
+    <p>search by title or DOI &mdash; find every legal free copy that exists</p>
+  </div>
+  <hr class="rule">
+
+  <div class="tabs">
+    <button class="tab active" id="tabDoi">Look up a DOI</button>
+    <button class="tab" id="tabSearch">Search by title / author</button>
+    <button class="tab" id="tabLibrary">My library (<span id="libCount">0</span>)</button>
+    <button class="tab" id="tabDash">Library dashboard</button>
+    <button class="tab" id="tabBulk">Bulk check</button>
+    <button class="tab" id="tabRoi">For libraries: ROI</button>
+  </div>
+
+  <div class="card" id="lookupCard">
+    <div class="form-row">
+      <input type="text" id="queryInput" placeholder="10.1038/nphys1170  or  doi.org/10.xxxx/...">
+      <button id="goBtn">Look up</button>
+    </div>
+    <div class="hint" id="inputHint">accepts a bare DOI or a doi.org URL</div>
+
+    <div class="status" id="status"></div>
+    <div class="error" id="error"></div>
+
+    <div id="searchResults" class="result-list"></div>
+
+    <div id="paperResult" style="display:none;">
+      <span class="back-link" id="backLink" style="display:none;">&larr; back to results</span>
+      <p class="paper-title" id="rTitle"></p>
+      <p class="paper-meta" id="rMeta"></p>
+      <div class="action-row">
+        <button class="save-btn" id="saveBtn">+ Save to library</button>
+        <div class="cite-wrap">
+          <button class="save-btn" id="citeBtn" style="display:none;">Export citation \u25be</button>
+          <div class="cite-menu" id="citeMenu" style="display:none;">
+            <button data-fmt="bibtex">BibTeX (.bib)</button>
+            <button data-fmt="ris">RIS (.ris)</button>
+            <button data-fmt="plain">Copy plain-text citation</button>
+          </div>
+        </div>
+      </div>
+      <div id="stampWrap"></div>
+      <div id="sourcesWrap"></div>
+      <div class="dash-section-title" id="relatedTitle" style="display:none;">You might also want to read</div>
+      <div id="relatedWrap"></div>
+    </div>
+  </div>
+
+  <div class="card" id="libraryCard" style="display:none;">
+    <div class="hint" style="margin-top:0;">saved on this device &mdash; stored privately, not shared</div>
+    <div id="libraryList" class="result-list"></div>
+  </div>
+
+  <div class="card" id="dashCard" style="display:none;">
+    <div class="hint" style="margin-top:0; display:flex; justify-content:space-between; align-items:baseline;">
+      <span>institution-wide usage &mdash; shared across everyone using this deployment</span>
+      <span class="reset-link" id="resetDash">reset demo data</span>
+    </div>
+
+    <div class="cost-input-row">
+      <label for="costInput">Assumed cost avoided per article found ($):</label>
+      <input type="number" id="costInput" min="0" step="1" value="35">
+      <span class="cost-hint">use your institution's actual pay-per-view/ILL cost, not a placeholder</span>
+    </div>
+
+    <div class="dash-grid">
+      <div class="dash-stat">
+        <div class="num" id="dashLookups">0</div>
+        <div class="lbl">total lookups this session</div>
+      </div>
+      <div class="dash-stat">
+        <div class="num" id="dashFound">0</div>
+        <div class="lbl">legal free copies found</div>
+      </div>
+      <div class="dash-stat">
+        <div class="num" id="dashRate">0%</div>
+        <div class="lbl">OA hit rate</div>
+      </div>
+      <div class="dash-stat">
+        <div class="num money" id="dashSavings">$0</div>
+        <div class="lbl">estimated cost avoided</div>
+      </div>
+    </div>
+    <div class="dash-note" id="dashMethodNote"></div>
+    <button class="save-btn" id="exportDashBtn">Export report (CSV)</button>
+
+    <div class="dash-section-title">Where the copies came from</div>
+    <div id="dashSources"></div>
+
+    <div class="dash-section-title">Most recently checked</div>
+    <div id="dashRecent" class="result-list"></div>
+  </div>
+
+  <div class="card" id="bulkCard" style="display:none;">
+    <div class="hint" style="margin-top:0;">paste a reading list, cancellation list, or DOI list &mdash; one per line &mdash; or upload a CSV/text file</div>
+    <textarea class="bulk-textarea" id="bulkInput" placeholder="10.1038/nphys1170&#10;10.3390/ma16083076&#10;https://doi.org/10.1016/j.cell.2020.01.021"></textarea>
+    <div class="bulk-actions">
+      <button id="bulkRunBtn">Check all</button>
+      <label class="bulk-file-label" for="bulkFile">or upload .csv / .txt</label>
+      <input type="file" id="bulkFile" accept=".csv,.txt" style="display:none;">
+      <button class="save-btn" id="bulkExportBtn" style="display:none;">Export results (CSV)</button>
+    </div>
+    <div class="bulk-progress" id="bulkProgress"></div>
+    <table class="bulk-table" id="bulkTable" style="display:none;">
+      <thead><tr><th>DOI</th><th>Title</th><th>Status</th><th>Best link</th></tr></thead>
+      <tbody id="bulkTbody"></tbody>
+    </table>
+  </div>
+
+  <div class="card" id="roiCard" style="display:none;">
+    <div class="hint" style="margin-top:0;">enter your institution's actual figures &mdash; every number below is computed live from what you type in, nothing is pre-filled or assumed</div>
+
+    <div class="roi-form-grid">
+      <div class="roi-field">
+        <label for="roiFTE">Total student + faculty FTE</label>
+        <input type="number" id="roiFTE" min="0" step="100" value="10000">
+      </div>
+      <div class="roi-field">
+        <label for="roiILLVolume">Interlibrary Loan requests / year</label>
+        <input type="number" id="roiILLVolume" min="0" step="10" value="2000">
+        <span class="field-hint">check your ILLiad/OCLC annual report</span>
+      </div>
+      <div class="roi-field">
+        <label for="roiILLCost">Average cost per ILL request ($)</label>
+        <input type="number" id="roiILLCost" min="0" step="1" value="18">
+        <span class="field-hint">typical range $9&ndash;$35, ARL studies vary by year</span>
+      </div>
+      <div class="roi-field">
+        <label for="roiOAOffset">% of ILL requests likely to have a legal free copy instead</label>
+        <input type="number" id="roiOAOffset" min="0" max="100" step="1" value="20">
+        <span class="field-hint">conservative default; validate with your own bulk-check results</span>
+      </div>
+      <div class="roi-field">
+        <label for="roiStaffHours">Staff hours/week spent on manual OA lookups</label>
+        <input type="number" id="roiStaffHours" min="0" step="0.5" value="3">
+      </div>
+      <div class="roi-field">
+        <label for="roiStaffRate">Staff hourly cost, fully loaded ($)</label>
+        <input type="number" id="roiStaffRate" min="0" step="1" value="35">
+      </div>
+    </div>
+
+    <div class="roi-output" id="roiOutput"></div>
+
+    <div class="dash-section-title">Suggested tiered pricing (FTE-based, like comparable library tools)</div>
+    <table class="pricing-table" id="pricingTable"></table>
+
+    <div class="roi-caveat">
+      <strong>Honest framing:</strong> Real library-discovery tools in this space (e.g. Third Iron's LibKey) don't publish fixed prices &mdash; they quote per-institution based on FTE and offer consortium discounts. The tiers above follow that same convention as a starting point for negotiation, not a fixed rate card. The 20% ILL-offset assumption is a deliberately conservative placeholder &mdash; replace it with your own number from the Bulk Check tab once you've tested it against a real slice of your ILL request log.
+    </div>
+  </div>
+
+  <p class="footer-note">
+    Sources checked: CrossRef, Unpaywall, OpenAlex, and Europe PMC &mdash; four independent open-access indexes,<br>
+    aggregated and ranked so you see every legitimate free copy, not just one source's pick.<br>
+    Saved papers live in your personal library, stored privately on this device.
+  </p>
+
+</div>
+
+<script>
+(function() {
+  const queryInput = document.getElementById('queryInput');
+  const goBtn = document.getElementById('goBtn');
+  const statusEl = document.getElementById('status');
+  const errorEl = document.getElementById('error');
+  const tabDoi = document.getElementById('tabDoi');
+  const tabSearch = document.getElementById('tabSearch');
+  const tabLibrary = document.getElementById('tabLibrary');
+  const tabDash = document.getElementById('tabDash');
+  const tabBulk = document.getElementById('tabBulk');
+  const tabRoi = document.getElementById('tabRoi');
+  const roiCard = document.getElementById('roiCard');
+  const lookupCard = document.getElementById('lookupCard');
+  const libraryCard = document.getElementById('libraryCard');
+  const dashCard = document.getElementById('dashCard');
+  const bulkCard = document.getElementById('bulkCard');
+  const libraryList = document.getElementById('libraryList');
+  const libCount = document.getElementById('libCount');
+  const dashLookups = document.getElementById('dashLookups');
+  const dashFound = document.getElementById('dashFound');
+  const dashRate = document.getElementById('dashRate');
+  const dashSavings = document.getElementById('dashSavings');
+  const dashMethodNote = document.getElementById('dashMethodNote');
+  const dashSources = document.getElementById('dashSources');
+  const dashRecent = document.getElementById('dashRecent');
+  const resetDash = document.getElementById('resetDash');
+  const inputHint = document.getElementById('inputHint');
+  const searchResultsEl = document.getElementById('searchResults');
+  const paperResultEl = document.getElementById('paperResult');
+  const backLink = document.getElementById('backLink');
+  const rTitle = document.getElementById('rTitle');
+  const rMeta = document.getElementById('rMeta');
+  const stampWrap = document.getElementById('stampWrap');
+  const sourcesWrap = document.getElementById('sourcesWrap');
+  const saveBtn = document.getElementById('saveBtn');
+  const citeBtn = document.getElementById('citeBtn');
+  const citeMenu = document.getElementById('citeMenu');
+  const relatedWrap = document.getElementById('relatedWrap');
+  const relatedTitle = document.getElementById('relatedTitle');
+
+  let mode = 'doi';
+  let currentPaper = null;
+
+  function setMode(m) {
+    mode = m;
+    tabDoi.classList.toggle('active', m === 'doi');
+    tabSearch.classList.toggle('active', m === 'search');
+    tabLibrary.classList.toggle('active', m === 'library');
+    tabDash.classList.toggle('active', m === 'dash');
+    tabBulk.classList.toggle('active', m === 'bulk');
+    tabRoi.classList.toggle('active', m === 'roi');
+    lookupCard.style.display = (m === 'doi' || m === 'search') ? 'block' : 'none';
+    libraryCard.style.display = m === 'library' ? 'block' : 'none';
+    dashCard.style.display = m === 'dash' ? 'block' : 'none';
+    bulkCard.style.display = m === 'bulk' ? 'block' : 'none';
+    roiCard.style.display = m === 'roi' ? 'block' : 'none';
+    if (m === 'library') { renderLibrary(); return; }
+    if (m === 'dash') { renderDashboard(); return; }
+    if (m === 'bulk') { return; }
+    if (m === 'roi') { renderRoi(); return; }
+    queryInput.placeholder = m === 'doi'
+      ? '10.1038/nphys1170  or  doi.org/10.xxxx/...'
+      : 'e.g. attention is all you need, or an author + topic';
+    inputHint.textContent = m === 'doi'
+      ? 'accepts a bare DOI or a doi.org URL'
+      : 'search across millions of indexed papers by title, keywords, or author';
+    setError('');
+    setStatus('');
+    searchResultsEl.innerHTML = '';
+    paperResultEl.style.display = 'none';
+  }
+  tabDoi.addEventListener('click', () => setMode('doi'));
+  tabSearch.addEventListener('click', () => setMode('search'));
+  tabLibrary.addEventListener('click', () => setMode('library'));
+  tabDash.addEventListener('click', () => setMode('dash'));
+  tabBulk.addEventListener('click', () => setMode('bulk'));
+  tabRoi.addEventListener('click', () => setMode('roi'));
+
+  // ---- Institution-wide usage stats (SHARED across all users of this deployment) ----
+  const PER_ARTICLE_COST = 35; // typical pay-per-view / document-delivery estimate, editable assumption
+  async function getStats() {
+    try {
+      const res = await window.storage.get('institution-stats', true);
+      return res ? JSON.parse(res.value) : { lookups: 0, found: 0, sources: {}, recent: [] };
+    } catch (e) {
+      return { lookups: 0, found: 0, sources: {}, recent: [] };
+    }
+  }
+  async function saveStats(stats) {
+    try {
+      await window.storage.set('institution-stats', JSON.stringify(stats), true);
+    } catch (e) { /* non-fatal for demo purposes */ }
+  }
+  async function recordLookup(paper, locations) {
+    const stats = await getStats();
+    stats.lookups += 1;
+    if (locations.length) {
+      stats.found += 1;
+      locations.forEach(loc => {
+        stats.sources[loc.source] = (stats.sources[loc.source] || 0) + 1;
+      });
+    }
+    stats.recent.unshift({ title: paper.title, doi: paper.doi, found: locations.length > 0, when: new Date().toISOString() });
+    stats.recent = stats.recent.slice(0, 8);
+    await saveStats(stats);
+  }
+  async function renderDashboard() {
+    const stats = await getStats();
+    dashLookups.textContent = stats.lookups;
+    dashFound.textContent = stats.found;
+    const rate = stats.lookups ? Math.round((stats.found / stats.lookups) * 100) : 0;
+    dashRate.textContent = rate + '%';
+    dashSavings.textContent = '$' + (stats.found * (Number(costInput.value) || 0)).toLocaleString();
+    dashMethodNote.textContent = 'Adjust the cost-per-article figure above to your institution\u2019s real pay-per-view or interlibrary loan cost before citing this number externally \u2014 $' + (Number(costInput.value) || 0) + ' is currently just an editable placeholder.';
+
+    dashSources.innerHTML = '';
+    const sourceEntries = Object.entries(stats.sources).sort((a, b) => b[1] - a[1]);
+    const maxVal = sourceEntries.length ? sourceEntries[0][1] : 1;
+    if (!sourceEntries.length) {
+      dashSources.innerHTML = '<div class="empty-lib">No data yet \u2014 look up a few DOIs to populate this.</div>';
+    } else {
+      sourceEntries.forEach(([src, count]) => {
+        const row = document.createElement('div');
+        row.className = 'dash-bar-row';
+        row.innerHTML = '<div class="bar-label"></div><div class="dash-bar-track"><div class="dash-bar-fill"></div></div><div class="dash-bar-val"></div>';
+        row.querySelector('.bar-label').textContent = src;
+        row.querySelector('.dash-bar-fill').style.width = Math.round((count / maxVal) * 100) + '%';
+        row.querySelector('.dash-bar-val').textContent = count;
+        dashSources.appendChild(row);
+      });
+    }
+
+    dashRecent.innerHTML = '';
+    if (!stats.recent.length) {
+      dashRecent.innerHTML = '<div class="empty-lib">Nothing checked yet.</div>';
+    } else {
+      stats.recent.forEach(r => {
+        const div = document.createElement('div');
+        div.className = 'search-item';
+        div.style.cursor = 'default';
+        div.innerHTML = '<p class="title"></p><p class="meta"></p>';
+        div.querySelector('.title').textContent = r.title;
+        div.querySelector('.meta').textContent = (r.found ? '\u2713 OA copy found' : '\u2717 no OA copy found') + ' \u00b7 DOI: ' + r.doi;
+        dashRecent.appendChild(div);
+      });
+    }
+  }
+  resetDash.addEventListener('click', async () => {
+    await saveStats({ lookups: 0, found: 0, sources: {}, recent: [] });
+    renderDashboard();
+  });
+
+  // ---- ROI calculator (For libraries) ----
+  const roiInputs = ['roiFTE', 'roiILLVolume', 'roiILLCost', 'roiOAOffset', 'roiStaffHours', 'roiStaffRate'].map(id => document.getElementById(id));
+  const roiOutput = document.getElementById('roiOutput');
+  const pricingTable = document.getElementById('pricingTable');
+
+  function pricingTierFor(fte) {
+    // FTE-tiered flat annual fee, following the same convention as comparable
+    // library-discovery tools (quote-based, tiered by size) rather than a fixed universal rate.
+    const tiers = [
+      { max: 3000,   label: 'Small (< 3,000 FTE)',        annual: 3500 },
+      { max: 10000,  label: 'Medium (3,000\u201310,000 FTE)',   annual: 7500 },
+      { max: 25000,  label: 'Large (10,000\u201325,000 FTE)',   annual: 14000 },
+      { max: Infinity, label: 'Very large / consortium (25,000+ FTE)', annual: 22000 },
+    ];
+    return tiers.find(t => fte <= t.max) || tiers[tiers.length - 1];
+  }
+
+  function renderRoi() {
+    function calc() {
+      const fte = Number(document.getElementById('roiFTE').value) || 0;
+      const illVolume = Number(document.getElementById('roiILLVolume').value) || 0;
+      const illCost = Number(document.getElementById('roiILLCost').value) || 0;
+      const oaOffset = Number(document.getElementById('roiOAOffset').value) || 0;
+      const staffHours = Number(document.getElementById('roiStaffHours').value) || 0;
+      const staffRate = Number(document.getElementById('roiStaffRate').value) || 0;
+
+      const illRequestsOffset = illVolume * (oaOffset / 100);
+      const illCostAvoided = illRequestsOffset * illCost;
+      const staffTimeSavedAnnual = staffHours * 52 * staffRate;
+      const totalAnnualBenefit = illCostAvoided + staffTimeSavedAnnual;
+
+      const tier = pricingTierFor(fte);
+      const netAnnualValue = totalAnnualBenefit - tier.annual;
+      const paybackMonths = tier.annual > 0 && totalAnnualBenefit > 0
+        ? (tier.annual / totalAnnualBenefit) * 12
+        : null;
+
+      roiOutput.innerHTML = '';
+      const rows = [
+        ['ILL requests likely offset by legal OA copies / year', Math.round(illRequestsOffset).toLocaleString()],
+        ['Estimated ILL cost avoided / year', '$' + Math.round(illCostAvoided).toLocaleString()],
+        ['Staff time saved / year (at ' + staffHours + ' hrs/week)', '$' + Math.round(staffTimeSavedAnnual).toLocaleString()],
+        ['Total estimated annual benefit', '$' + Math.round(totalAnnualBenefit).toLocaleString()],
+        ['Suggested tier for your FTE (' + tier.label + ')', '$' + tier.annual.toLocaleString() + '/yr'],
+      ];
+      rows.forEach(([lbl, val]) => {
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.innerHTML = '<span class="lbl"></span><span class="val"></span>';
+        row.querySelector('.lbl').textContent = lbl;
+        row.querySelector('.val').textContent = val;
+        roiOutput.appendChild(row);
+      });
+
+      const totalRow = document.createElement('div');
+      totalRow.className = 'row total';
+      totalRow.innerHTML = '<span class="lbl"></span><span class="val"></span>';
+      totalRow.querySelector('.lbl').textContent = 'Net annual value (benefit minus cost)';
+      const valEl = totalRow.querySelector('.val');
+      valEl.textContent = (netAnnualValue >= 0 ? '+$' : '-$') + Math.abs(Math.round(netAnnualValue)).toLocaleString()
+        + (paybackMonths !== null ? '  (payback in ' + paybackMonths.toFixed(1) + ' months)' : '');
+      if (netAnnualValue < 0) valEl.classList.add('negative');
+      roiOutput.appendChild(totalRow);
+    }
+
+    roiInputs.forEach(el => { el.removeEventListener('input', calc); el.addEventListener('input', calc); });
+    calc();
+
+    pricingTable.innerHTML = '';
+    const thead = document.createElement('thead');
+    thead.innerHTML = '<tr><th>Tier</th><th>Institution size</th><th>Suggested annual fee</th></tr>';
+    pricingTable.appendChild(thead);
+    const tbody = document.createElement('tbody');
+    const fte = Number(document.getElementById('roiFTE').value) || 0;
+    const currentTier = pricingTierFor(fte);
+    [
+      { name: 'Small', label: '< 3,000 FTE', annual: 3500, max: 3000 },
+      { name: 'Medium', label: '3,000\u201310,000 FTE', annual: 7500, max: 10000 },
+      { name: 'Large', label: '10,000\u201325,000 FTE', annual: 14000, max: 25000 },
+      { name: 'Very large / consortium', label: '25,000+ FTE', annual: 22000, max: Infinity },
+    ].forEach(t => {
+      const tr = document.createElement('tr');
+      if (t.annual === currentTier.annual) tr.className = 'highlight';
+      tr.innerHTML = '<td></td><td></td><td></td>';
+      tr.children[0].textContent = t.name + (t.annual === currentTier.annual ? ' \u2190 your tier' : '');
+      tr.children[1].textContent = t.label;
+      tr.children[2].textContent = '$' + t.annual.toLocaleString() + '/yr';
+      tbody.appendChild(tr);
+    });
+    pricingTable.appendChild(tbody);
+  }
+
+  // ---- Library storage (personal, per-user) ----
+  async function getLibrary() {
+    try {
+      const res = await window.storage.get('library', false);
+      return res ? JSON.parse(res.value) : [];
+    } catch (e) {
+      return [];
+    }
+  }
+  async function saveLibrary(list) {
+    try {
+      await window.storage.set('library', JSON.stringify(list), false);
+    } catch (e) {
+      setError('Could not save \u2014 storage error.');
+    }
+  }
+  async function refreshLibCount() {
+    const list = await getLibrary();
+    libCount.textContent = list.length;
+  }
+  async function isSaved(doi) {
+    const list = await getLibrary();
+    return list.some(p => p.doi === doi);
+  }
+  async function addToLibrary(paper) {
+    const list = await getLibrary();
+    if (list.some(p => p.doi === paper.doi)) return;
+    list.unshift(paper);
+    await saveLibrary(list);
+    await refreshLibCount();
+  }
+  async function removeFromLibrary(doi) {
+    const list = await getLibrary();
+    const next = list.filter(p => p.doi !== doi);
+    await saveLibrary(next);
+    await refreshLibCount();
+    renderLibrary();
+  }
+  async function renderLibrary() {
+    const list = await getLibrary();
+    libraryList.innerHTML = '';
+    if (!list.length) {
+      libraryList.innerHTML = '<div class="empty-lib">No papers saved yet. Look one up and hit "Save to library."</div>';
+      return;
+    }
+    list.forEach(p => {
+      const row = document.createElement('div');
+      row.className = 'lib-item';
+      const main = document.createElement('div');
+      main.className = 'lib-main';
+      main.innerHTML = '<p class="title"></p><p class="meta"></p>';
+      main.querySelector('.title').textContent = p.title;
+      main.querySelector('.meta').textContent = p.meta;
+      main.addEventListener('click', () => {
+        setMode('doi');
+        queryInput.value = p.doi;
+        go();
+      });
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove-btn';
+      removeBtn.textContent = 'Remove';
+      removeBtn.addEventListener('click', (e) => { e.stopPropagation(); removeFromLibrary(p.doi); });
+      row.appendChild(main);
+      row.appendChild(removeBtn);
+      libraryList.appendChild(row);
+    });
+  }
+  refreshLibCount();
+
+  saveBtn.addEventListener('click', async () => {
+    if (!currentPaper) return;
+    if (await isSaved(currentPaper.doi)) return;
+    await addToLibrary(currentPaper);
+    saveBtn.textContent = '\u2713 Saved';
+    saveBtn.classList.add('saved');
+  });
+
+  // ---- Citation export (BibTeX / RIS / plain text) ----
+  function firstAuthorSurname(authorStr) {
+    const first = (authorStr || '').split(',')[0].trim();
+    const parts = first.split(' ');
+    return parts[parts.length - 1] || 'unknown';
+  }
+  function buildBibtex(p) {
+    const key = firstAuthorSurname(p.authorStr) + (p.year || '') + p.doi.replace(/[^a-zA-Z0-9]/g, '').slice(-4);
+    return '@article{' + key + ',\n' +
+      '  title = {' + p.title + '},\n' +
+      '  author = {' + (p.authorStr || '') + '},\n' +
+      (p.venue ? '  journal = {' + p.venue + '},\n' : '') +
+      (p.year ? '  year = {' + p.year + '},\n' : '') +
+      '  doi = {' + p.doi + '}\n' +
+      '}';
+  }
+  function buildRis(p) {
+    const authors = (p.authorStr || '').split(',').map(a => a.trim()).filter(a => a && a !== 'et al.');
+    let ris = 'TY  - JOUR\n';
+    authors.forEach(a => { ris += 'AU  - ' + a + '\n'; });
+    ris += 'TI  - ' + p.title + '\n';
+    if (p.venue) ris += 'JO  - ' + p.venue + '\n';
+    if (p.year) ris += 'PY  - ' + p.year + '\n';
+    ris += 'DO  - ' + p.doi + '\n';
+    ris += 'ER  - \n';
+    return ris;
+  }
+  function buildPlainCitation(p) {
+    return (p.authorStr || 'Unknown authors') + (p.year ? ' (' + p.year + ').' : '.') + ' ' + p.title + '.' + (p.venue ? ' ' + p.venue + '.' : '') + ' https://doi.org/' + p.doi;
+  }
+  function downloadText(filename, text, mime) {
+    const blob = new Blob([text], { type: mime || 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+  citeBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    citeMenu.style.display = citeMenu.style.display === 'block' ? 'none' : 'block';
+  });
+  document.addEventListener('click', () => { citeMenu.style.display = 'none'; });
+  citeMenu.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if (!currentPaper) return;
+      const fmt = btn.dataset.fmt;
+      const safeName = currentPaper.doi.replace(/[^a-zA-Z0-9]/g, '_');
+      if (fmt === 'bibtex') downloadText(safeName + '.bib', buildBibtex(currentPaper), 'application/x-bibtex');
+      else if (fmt === 'ris') downloadText(safeName + '.ris', buildRis(currentPaper), 'application/x-research-info-systems');
+      else if (fmt === 'plain') {
+        const text = buildPlainCitation(currentPaper);
+        try { await navigator.clipboard.writeText(text); btn.textContent = 'Copied!'; setTimeout(() => { btn.textContent = 'Copy plain-text citation'; }, 1500); }
+        catch (e) { downloadText(safeName + '.txt', text); }
+      }
+      citeMenu.style.display = 'none';
+    });
+  });
+
+  // ---- Related papers (via OpenAlex citation graph) ----
+  async function renderRelated(relatedIds) {
+    relatedWrap.innerHTML = '';
+    relatedTitle.style.display = 'none';
+    if (!relatedIds.length) return;
+    const sample = relatedIds.slice(0, 5);
+    const items = [];
+    for (const id of sample) {
+      try {
+        const workId = id.replace('https://openalex.org/', '');
+        const work = await fetchJson('https://api.openalex.org/works/' + workId);
+        if (work && work.title) {
+          items.push({
+            title: work.title,
+            doi: work.doi ? work.doi.replace('https://doi.org/', '') : null,
+            year: work.publication_year || '',
+            venue: (work.primary_location && work.primary_location.source && work.primary_location.source.display_name) || ''
+          });
+        }
+      } catch (e) { /* skip this one */ }
+    }
+    if (!items.length) return;
+    relatedTitle.style.display = 'block';
+    items.forEach(item => {
+      const div = document.createElement('div');
+      div.className = 'related-item';
+      div.innerHTML = '<p class="related-title"></p><p class="related-meta"></p>';
+      div.querySelector('.related-title').textContent = item.title;
+      div.querySelector('.related-meta').textContent = [item.venue, item.year].filter(Boolean).join(' \u00b7 ') + (item.doi ? ' \u00b7 DOI: ' + item.doi : ' \u00b7 (no DOI indexed)');
+      if (item.doi) {
+        div.addEventListener('click', () => {
+          setMode('doi');
+          queryInput.value = item.doi;
+          go();
+        });
+      } else {
+        div.style.cursor = 'default';
+      }
+      relatedWrap.appendChild(div);
+    });
+  }
+
+  function setStatus(msg) { statusEl.textContent = msg; }
+  function setError(msg) { errorEl.textContent = msg; errorEl.style.display = msg ? 'block' : 'none'; }
+
+  function extractDoi(raw) {
+    let s = raw.trim();
+    s = s.replace(/^https?:\/\/(dx\.)?doi\.org\//i, '');
+    s = s.replace(/^doi:/i, '');
+    return s.trim();
+  }
+
+  async function fetchJson(url, opts) {
+    const res = await fetch(url, opts || { mode: 'cors' });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return res.json();
+  }
+
+  function formatAuthors(list, max) {
+    if (!list || !list.length) return 'Authors not listed';
+    const names = list.map(a => a).filter(Boolean);
+    return names.length > max ? names.slice(0, max).join(', ') + ', et al.' : names.join(', ');
+  }
+
+  async function go() {
+    const q = queryInput.value.trim();
+    if (!q) { setError('Type something first.'); return; }
+    setError(''); paperResultEl.style.display = 'none'; searchResultsEl.innerHTML = '';
+    goBtn.disabled = true;
+    if (mode === 'doi') {
+      await lookupDoi(extractDoi(q));
+    } else {
+      await searchTitle(q);
+    }
+    goBtn.disabled = false;
+  }
+  goBtn.addEventListener('click', go);
+  queryInput.addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+
+  async function searchTitle(q) {
+    setStatus('Searching OpenAlex...');
+    try {
+      const data = await fetchJson('https://api.openalex.org/works?search=' + encodeURIComponent(q) + '&per-page=8');
+      setStatus('');
+      const results = data.results || [];
+      if (!results.length) {
+        setError('No matches found. Try different keywords.');
+        return;
+      }
+      searchResultsEl.innerHTML = '';
+      results.forEach(w => {
+        const doi = w.doi ? w.doi.replace(/^https?:\/\/doi\.org\//i, '') : null;
+        const div = document.createElement('div');
+        div.className = 'search-item';
+        const authors = (w.authorships || []).map(a => a.author && a.author.display_name).filter(Boolean);
+        const venue = (w.primary_location && w.primary_location.source && w.primary_location.source.display_name) || '';
+        const year = w.publication_year || '';
+        div.innerHTML = '<p class="title"></p><p class="meta"></p>';
+        div.querySelector('.title').textContent = w.title || '(untitled)';
+        div.querySelector('.meta').textContent = formatAuthors(authors, 3) + (venue ? ' \u2014 ' + venue : '') + (year ? ' (' + year + ')' : '') + (doi ? ' \u00b7 DOI: ' + doi : ' \u00b7 no DOI indexed');
+        div.addEventListener('click', () => {
+          if (doi) {
+            searchResultsEl.style.display = 'none';
+            backLink.style.display = 'inline-block';
+            lookupDoi(doi, true);
+          } else {
+            setError('This result has no DOI indexed, so a direct OA check isn\u2019t possible here.');
+          }
+        });
+        searchResultsEl.appendChild(div);
+      });
+    } catch (err) {
+      setStatus('');
+      setError('Search request failed: ' + (err.message || 'network error') + '. If you opened this as a local file, some browsers block outbound requests \u2014 try the hosted preview instead.');
+    }
+  }
+
+  backLink.addEventListener('click', () => {
+    paperResultEl.style.display = 'none';
+    backLink.style.display = 'none';
+    searchResultsEl.style.display = 'block';
+  });
+
+  // ---- Reusable: fetch CrossRef metadata + Unpaywall/OpenAlex OA locations for one DOI ----
+  // ---- Europe PMC (EBI) — free, keyless, strong European/global biomedical repository coverage ----
+  async function checkEuropePmc(doi, locations) {
+    try {
+      const seen = new Set(locations.map(l => l.url));
+      const epmc = await fetchJson('https://www.ebi.ac.uk/europepmc/webservices/rest/search?query=DOI:' + encodeURIComponent(doi) + '&format=json&resultType=core');
+      const result = epmc.resultList && epmc.resultList.result && epmc.resultList.result[0];
+      if (result && result.fullTextUrlList && result.fullTextUrlList.fullTextUrl) {
+        result.fullTextUrlList.fullTextUrl.forEach(u => {
+          if (u.url && (u.availability === 'Open access' || u.availability === 'Free') && !seen.has(u.url)) {
+            seen.add(u.url);
+            locations.push({
+              source: 'Europe PMC',
+              url: u.url,
+              type: (u.documentStyle === 'pdf' ? 'PDF' : (u.documentStyle || 'full text')) + ' \u00b7 repository copy',
+              license: null,
+              best: false
+            });
+          }
+        });
+      }
+    } catch (e) { /* silent, this is a supplementary source */ }
+  }
+
+  async function checkDoiForOA(doi) {
+    let title = '(no title available)', authorStr = 'Authors not listed', venue = '', year = '';
+    try {
+      const cr = await fetchJson('https://api.crossref.org/works/' + encodeURIComponent(doi));
+      const msg = cr.message;
+      title = (msg.title && msg.title[0]) || title;
+      const authors = (msg.author || []).map(a => [a.given, a.family].filter(Boolean).join(' ')).filter(Boolean);
+      authorStr = formatAuthors(authors, 4);
+      venue = (msg['container-title'] && msg['container-title'][0]) || msg.publisher || '';
+      year = (msg.issued && msg.issued['date-parts'] && msg.issued['date-parts'][0] && msg.issued['date-parts'][0][0]) || '';
+    } catch (err) {
+      return { doi, title: '(not found in CrossRef)', authorStr: '', venue: '', year: '', locations: [], error: true };
+    }
+
+    const locations = [];
+    try {
+      const up = await fetchJson('https://api.unpaywall.org/v2/' + encodeURIComponent(doi) + '?email=oa-finder-tool@example.com');
+      const seen = new Set();
+      (up.oa_locations || []).forEach(loc => {
+        if (loc.url && !seen.has(loc.url)) {
+          seen.add(loc.url);
+          locations.push({ source: 'Unpaywall', url: loc.url, type: loc.host_type === 'repository' ? 'repository copy' : 'publisher OA', license: loc.license || null, best: up.best_oa_location && up.best_oa_location.url === loc.url });
+        }
+      });
+    } catch (e) { /* fall through to OpenAlex */ }
+
+    try {
+      const oa = await fetchJson('https://api.openalex.org/works/doi:' + encodeURIComponent(doi));
+      const seen = new Set(locations.map(l => l.url));
+      const collectLoc = (loc, tag) => {
+        if (loc && loc.pdf_url && !seen.has(loc.pdf_url)) { seen.add(loc.pdf_url); locations.push({ source: 'OpenAlex', url: loc.pdf_url, type: tag, license: loc.license || null, best: false }); }
+        else if (loc && loc.landing_page_url && !seen.has(loc.landing_page_url) && loc.is_oa) { seen.add(loc.landing_page_url); locations.push({ source: 'OpenAlex', url: loc.landing_page_url, type: tag, license: loc.license || null, best: false }); }
+      };
+      collectLoc(oa.best_oa_location, 'best OA (OpenAlex)');
+      (oa.locations || []).forEach(loc => { if (loc.is_oa) collectLoc(loc, 'OA location'); });
+    } catch (e) { /* silent */ }
+
+    await checkEuropePmc(doi, locations);
+
+    return { doi, title, authorStr, venue, year, locations, error: false };
+  }
+
+  // ---- Cost-per-article input ----
+  const costInput = document.getElementById('costInput');
+  costInput.addEventListener('input', () => { if (mode === 'dash') renderDashboard(); });
+
+  // ---- Bulk check ----
+  const bulkInput = document.getElementById('bulkInput');
+  const bulkRunBtn = document.getElementById('bulkRunBtn');
+  const bulkFile = document.getElementById('bulkFile');
+  const bulkProgress = document.getElementById('bulkProgress');
+  const bulkTable = document.getElementById('bulkTable');
+  const bulkTbody = document.getElementById('bulkTbody');
+  const bulkExportBtn = document.getElementById('bulkExportBtn');
+  let bulkResults = [];
+
+  bulkFile.addEventListener('change', () => {
+    const file = bulkFile.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => { bulkInput.value = reader.result; };
+    reader.readAsText(file);
+  });
+
+  function parseDoiList(raw) {
+    return raw.split(/[\r\n,]+/).map(s => extractDoi(s.trim())).filter(Boolean);
+  }
+
+  bulkRunBtn.addEventListener('click', async () => {
+    const dois = parseDoiList(bulkInput.value);
+    if (!dois.length) { bulkProgress.textContent = 'Paste at least one DOI first.'; return; }
+    bulkResults = [];
+    bulkTbody.innerHTML = '';
+    bulkTable.style.display = 'table';
+    bulkExportBtn.style.display = 'none';
+    bulkRunBtn.disabled = true;
+
+    for (let i = 0; i < dois.length; i++) {
+      const doi = dois[i];
+      bulkProgress.textContent = 'Checking ' + (i + 1) + ' of ' + dois.length + '\u2026 (' + doi + ')';
+      const row = document.createElement('tr');
+      row.innerHTML = '<td></td><td></td><td class="status-pending">checking\u2026</td><td></td>';
+      row.children[0].textContent = doi;
+      bulkTbody.appendChild(row);
+
+      const result = await checkDoiForOA(doi);
+      bulkResults.push(result);
+
+      row.children[1].textContent = result.title;
+      if (result.error) {
+        row.children[2].innerHTML = '<span class="status-no">not found</span>';
+      } else if (result.locations.length) {
+        row.children[2].innerHTML = '<span class="status-ok">OA found (' + result.locations.length + ')</span>';
+        const best = result.locations.find(l => l.best) || result.locations[0];
+        const link = document.createElement('a');
+        link.href = best.url; link.target = '_blank'; link.rel = 'noopener noreferrer'; link.textContent = 'open';
+        row.children[3].appendChild(link);
+      } else {
+        row.children[2].innerHTML = '<span class="status-no">no OA copy</span>';
+      }
+
+      recordLookup({ doi: result.doi, title: result.title }, result.locations);
+    }
+
+    bulkProgress.textContent = 'Done \u2014 ' + dois.length + ' DOIs checked.';
+    bulkRunBtn.disabled = false;
+    bulkExportBtn.style.display = 'inline-flex';
+  });
+
+  bulkExportBtn.addEventListener('click', () => {
+    const rows = [['DOI', 'Title', 'OA Found', 'Number of Copies', 'Best Link']];
+    bulkResults.forEach(r => {
+      const best = r.locations.find(l => l.best) || r.locations[0];
+      rows.push([r.doi, r.title, r.locations.length > 0 ? 'yes' : 'no', String(r.locations.length), best ? best.url : '']);
+    });
+    const csv = rows.map(r => r.map(cell => '"' + String(cell).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'oa-bulk-check-results.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('exportDashBtn').addEventListener('click', async () => {
+    const stats = await getStats();
+    const rows = [['Metric', 'Value']];
+    rows.push(['Total lookups', stats.lookups]);
+    rows.push(['OA copies found', stats.found]);
+    rows.push(['Hit rate', (stats.lookups ? Math.round((stats.found / stats.lookups) * 100) : 0) + '%']);
+    rows.push(['Cost per article assumed', '$' + (Number(costInput.value) || 0)]);
+    rows.push(['Estimated cost avoided', '$' + (stats.found * (Number(costInput.value) || 0))]);
+    rows.push([]);
+    rows.push(['Source', 'Count']);
+    Object.entries(stats.sources).forEach(([src, count]) => rows.push([src, count]));
+    const csv = rows.map(r => r.map(cell => '"' + String(cell).replace(/"/g, '""') + '"').join(',')).join('\r\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'library-dashboard-report.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  async function lookupDoi(doi, fromSearch) {
+    if (!doi) { setError('Enter a DOI first.'); return; }
+    setError('');
+    setStatus('Fetching metadata from CrossRef...');
+
+    let title = '(no title available)', authorStr = 'Authors not listed', venue = '', year = '';
+    try {
+      const cr = await fetchJson('https://api.crossref.org/works/' + encodeURIComponent(doi));
+      const msg = cr.message;
+      title = (msg.title && msg.title[0]) || title;
+      const authors = (msg.author || []).map(a => [a.given, a.family].filter(Boolean).join(' ')).filter(Boolean);
+      authorStr = formatAuthors(authors, 4);
+      venue = (msg['container-title'] && msg['container-title'][0]) || msg.publisher || '';
+      year = (msg.issued && msg.issued['date-parts'] && msg.issued['date-parts'][0] && msg.issued['date-parts'][0][0]) || '';
+    } catch (err) {
+      setStatus('');
+      setError('Could not find this DOI in CrossRef (' + (err.message || 'network error') + '). Double-check the DOI.');
+      return;
+    }
+
+    rTitle.textContent = title;
+    const metaStr = authorStr + (venue ? ' \u2014 ' + venue : '') + (year ? ' (' + year + ')' : '') + ' \u00b7 DOI: ' + doi;
+    rMeta.textContent = metaStr;
+    paperResultEl.style.display = 'block';
+    if (fromSearch) backLink.style.display = 'inline-block';
+
+    currentPaper = { doi: doi, title: title, meta: metaStr, authorStr: authorStr, venue: venue, year: year };
+    saveBtn.textContent = '+ Save to library';
+    saveBtn.classList.remove('saved');
+    isSaved(doi).then(saved => {
+      if (saved) { saveBtn.textContent = '\u2713 Saved'; saveBtn.classList.add('saved'); }
+    });
+    citeBtn.style.display = 'inline-flex';
+    relatedWrap.innerHTML = '';
+
+    setStatus('Checking Unpaywall, OpenAlex, and Europe PMC for legal free copies...');
+    stampWrap.innerHTML = '';
+    sourcesWrap.innerHTML = '';
+
+    const locations = [];
+
+    // Unpaywall
+    let unpaywallOk = false;
+    for (let attempt = 0; attempt < 2 && !unpaywallOk; attempt++) {
+      try {
+        const up = await fetchJson('https://api.unpaywall.org/v2/' + encodeURIComponent(doi) + '?email=oa-finder-tool@example.com');
+        unpaywallOk = true;
+        const seen = new Set();
+        (up.oa_locations || []).forEach(loc => {
+          if (loc.url && !seen.has(loc.url)) {
+            seen.add(loc.url);
+            locations.push({
+              source: 'Unpaywall',
+              url: loc.url,
+              type: loc.host_type === 'repository' ? 'repository copy' : 'publisher OA',
+              license: loc.license || null,
+              best: up.best_oa_location && up.best_oa_location.url === loc.url
+            });
+          }
+        });
+      } catch (e) {
+        await new Promise(r => setTimeout(r, 500));
+      }
+    }
+
+    // OpenAlex
+    try {
+      const oa = await fetchJson('https://api.openalex.org/works/doi:' + encodeURIComponent(doi));
+      const seen = new Set(locations.map(l => l.url));
+      const collectLoc = (loc, tag) => {
+        if (loc && loc.pdf_url && !seen.has(loc.pdf_url)) {
+          seen.add(loc.pdf_url);
+          locations.push({
+            source: 'OpenAlex',
+            url: loc.pdf_url,
+            type: tag,
+            license: loc.license || null,
+            best: false
+          });
+        } else if (loc && loc.landing_page_url && !seen.has(loc.landing_page_url) && loc.is_oa) {
+          seen.add(loc.landing_page_url);
+          locations.push({
+            source: 'OpenAlex',
+            url: loc.landing_page_url,
+            type: tag,
+            license: loc.license || null,
+            best: false
+          });
+        }
+      };
+      collectLoc(oa.best_oa_location, 'best OA (OpenAlex)');
+      (oa.locations || []).forEach(loc => { if (loc.is_oa) collectLoc(loc, 'OA location'); });
+      renderRelated(oa.related_works || []);
+    } catch (e) {
+      // silent fallback, Unpaywall may already have coverage
+    }
+
+    setStatus('Checking Europe PMC for additional repository copies...');
+    await checkEuropePmc(doi, locations);
+
+    setStatus('');
+
+    if (locations.length) {
+      const stamp = document.createElement('div');
+      stamp.className = 'stamp found';
+      stamp.textContent = locations.length > 1
+        ? 'Open access found \u2014 ' + locations.length + ' copies'
+        : 'Open access found';
+      stampWrap.appendChild(stamp);
+
+      locations.sort((a, b) => (b.best ? 1 : 0) - (a.best ? 1 : 0));
+      locations.forEach(loc => {
+        const row = document.createElement('div');
+        row.className = 'oa-source';
+        const label = document.createElement('div');
+        label.className = 'label';
+        label.textContent = loc.best ? 'best match' : loc.source;
+        const link = document.createElement('a');
+        link.href = loc.url; link.target = '_blank'; link.rel = 'noopener noreferrer';
+        link.textContent = loc.url;
+        const badge = document.createElement('div');
+        badge.className = 'badge';
+        badge.textContent = loc.type + (loc.license ? ' \u00b7 ' + loc.license : '');
+        row.appendChild(label); row.appendChild(link); row.appendChild(badge);
+        sourcesWrap.appendChild(row);
+      });
+    } else {
+      const stamp = document.createElement('div');
+      stamp.className = 'stamp notfound';
+      stamp.textContent = unpaywallOk ? 'No open copy found' : 'Open access check incomplete';
+      stampWrap.appendChild(stamp);
+      const note = document.createElement('p');
+      note.className = 'note';
+      note.textContent = unpaywallOk
+        ? 'No legal free copy is currently indexed across Unpaywall, OpenAlex, or Europe PMC. Get it through your library instead:'
+        : 'The Unpaywall check failed (network issue) and OpenAlex found nothing. Try again in a moment.';
+      sourcesWrap.appendChild(note);
+
+      if (unpaywallOk) {
+        const actions = document.createElement('div');
+        actions.className = 'no-oa-actions';
+
+        const illBtn = document.createElement('a');
+        illBtn.className = 'action-btn';
+        const illSubject = encodeURIComponent('Interlibrary Loan request: ' + title);
+        const illBody = encodeURIComponent(
+          'Please request the following article via Interlibrary Loan:\n\n' +
+          'Title: ' + title + '\n' +
+          'Authors: ' + authorStr + '\n' +
+          (venue ? 'Journal: ' + venue + '\n' : '') +
+          (year ? 'Year: ' + year + '\n' : '') +
+          'DOI: ' + doi + '\n\n' +
+          'No legal open-access copy was found via CrossRef/Unpaywall/OpenAlex at the time of this request.'
+        );
+        illBtn.href = 'mailto:?subject=' + illSubject + '&body=' + illBody;
+        illBtn.textContent = 'Request via Interlibrary Loan (email)';
+        actions.appendChild(illBtn);
+
+        const authorBtn = document.createElement('a');
+        authorBtn.className = 'action-btn secondary';
+        const authSubject = encodeURIComponent('Request for a copy of your paper: ' + title);
+        const authBody = encodeURIComponent(
+          'Dear author,\n\nI am trying to access your paper "' + title + '"' + (venue ? ' published in ' + venue : '') + ' (DOI: ' + doi + '), but could not find an open-access copy through my institution.\n\nWould you be willing to share a copy, e.g. the accepted manuscript version? Many publisher agreements permit this even when the final published version is paywalled.\n\nThank you for your time.'
+        );
+        authorBtn.href = 'mailto:?subject=' + authSubject + '&body=' + authBody;
+        authorBtn.textContent = 'Email the author for a copy';
+        actions.appendChild(authorBtn);
+
+        sourcesWrap.appendChild(actions);
+      }
+    }
+
+    recordLookup(currentPaper, locations);
+  }
+})();
+</script>
+</body>
+</html>

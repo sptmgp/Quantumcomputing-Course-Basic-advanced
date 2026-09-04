@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Control Óptimo Cuántico — GRAPE &amp; CRAB</title>
+<style>
+  :root{
+    --bg:#18271E;
+    --card:#233524;
+    --card2:#1E2F22;
+    --gold:#E8C468;
+    --white:#F3F1E7;
+    --muted:#AEBCA9;
+    --code-bg:#10190F;
+    --serif: Georgia, 'Times New Roman', serif;
+    --mono: 'Courier New', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    margin:0; padding:0; height:100%;
+    background:var(--bg); color:var(--white);
+    font-family:var(--serif);
+    overflow:hidden;
+  }
+  #deck{
+    position:relative; width:100%; height:100vh;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .slide{
+    position:absolute; inset:0;
+    display:none;
+    padding:4vh 5vw;
+    flex-direction:column;
+  }
+  .slide.active{ display:flex; }
+
+  .kicker{
+    text-transform:uppercase; letter-spacing:2px; font-weight:bold;
+    color:var(--gold); font-size:0.8rem; margin-bottom:0.6rem;
+  }
+  h1{
+    font-size:2.2rem; margin:0 0 0.3rem 0; color:var(--white);
+    line-height:1.15;
+  }
+  .en-only h1{ font-style:italic; }
+
+  .lang-block{ display:none; }
+  .lang-block.visible{ display:revert; }
+
+  .body-text{
+    font-size:1.05rem; line-height:1.6; color:var(--white);
+  }
+  .body-text.muted{ color:var(--muted); }
+
+  .cards{
+    display:flex; gap:1.5vw; margin-top:2vh; flex:1; min-height:0;
+  }
+  .card{
+    background:var(--card); border-radius:14px; padding:1.6rem;
+    flex:1; overflow:auto;
+  }
+  .card.alt{ background:var(--card2); }
+  .card h3{
+    color:var(--gold); font-size:0.85rem; letter-spacing:1px;
+    text-transform:uppercase; margin:0 0 1rem 0;
+  }
+  .card p{ font-size:1rem; line-height:1.55; margin:0 0 1rem 0; }
+
+  .formula-box{
+    background:var(--code-bg); border:1px solid var(--gold);
+    border-radius:10px; padding:1.2rem 1.5rem; margin:1.2rem 0;
+    font-family:var(--mono); color:var(--gold); font-size:1.15rem;
+  }
+  .formula-box .sub{ color:var(--white); font-size:1rem; margin-top:0.6rem; }
+  .formula-box .cap{ color:var(--muted); font-size:0.8rem; font-style:italic; margin-top:0.6rem; }
+
+  table{
+    width:100%; border-collapse:collapse; margin-top:1rem; flex:1;
+  }
+  th,td{
+    padding:0.7rem 1rem; text-align:left; border-bottom:1px solid #36503F;
+    font-size:0.95rem;
+  }
+  th{ background:var(--gold); color:var(--bg); font-weight:bold; }
+  td{ font-family:var(--mono); }
+
+  .takeaway-list{ display:flex; flex-direction:column; gap:0.9rem; margin-top:1.5rem; flex:1; overflow:auto; }
+  .takeaway{
+    background:var(--card); border-radius:12px; padding:1rem 1.3rem;
+    display:flex; gap:1rem; align-items:flex-start;
+  }
+  .takeaway .num{ color:var(--gold); font-size:1.8rem; font-weight:bold; font-family:var(--serif); }
+  .takeaway .txt p{ margin:0.15rem 0; font-size:0.95rem; line-height:1.4; }
+
+  /* Language toggle */
+  #lang-toggle{
+    position:fixed; top:2vh; right:5vw; z-index:50;
+    display:flex; background:var(--card2); border-radius:999px; padding:4px;
+    gap:4px; box-shadow:0 4px 14px rgba(0,0,0,0.4);
+  }
+  #lang-toggle button{
+    border:none; background:transparent; color:var(--muted);
+    font-family:var(--serif); font-size:0.85rem; font-weight:bold;
+    padding:0.45rem 1.1rem; border-radius:999px; cursor:pointer;
+    transition:all .2s ease;
+  }
+  #lang-toggle button.active{ background:var(--gold); color:var(--bg); }
+
+  /* Nav */
+  #nav{
+    position:fixed; bottom:2vh; left:0; right:0; z-index:50;
+    display:flex; align-items:center; justify-content:center; gap:1rem;
+  }
+  #nav button{
+    background:var(--card2); border:none; color:var(--gold);
+    width:2.4rem; height:2.4rem; border-radius:50%; font-size:1.1rem;
+    cursor:pointer; display:flex; align-items:center; justify-content:center;
+  }
+  #nav button:hover{ background:var(--card); }
+  #dots{ display:flex; gap:0.4rem; }
+  .dot{
+    width:8px; height:8px; border-radius:50%; background:#36503F; cursor:pointer;
+  }
+  .dot.active{ background:var(--gold); }
+
+  #pageno{
+    position:fixed; bottom:2vh; right:5vw; color:var(--muted); font-size:0.85rem;
+  }
+
+  .hint-row{ display:flex; gap:1rem; margin-top:auto; padding-top:1rem; }
+  .hint-row .body-text{ font-size:0.85rem; }
+
+  .legend-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:1rem; margin-top:1.5rem; flex:1;
+  }
+  .legend-grid .litem{
+    background:var(--card); border-radius:12px; padding:1rem 1.2rem;
+  }
+  .legend-grid .litem .sym{
+    font-family:var(--mono); color:var(--gold); font-weight:bold; font-size:1.05rem; margin-bottom:0.4rem;
+  }
+  .legend-grid .litem p{ font-size:0.88rem; line-height:1.4; margin:0; }
+  .eq-hero{
+    font-family:var(--mono); font-size:1.15rem; color:var(--gold); background:var(--code-bg);
+    border:1px solid var(--gold); border-radius:10px; padding:1rem 1.3rem; margin-top:1rem;
+  }
+</style>
+</head>
+<body>
+
+<div id="lang-toggle">
+  <button id="btn-es" onclick="setLang('es')">ESPAÑOL</button>
+  <button id="btn-en" onclick="setLang('en')">ENGLISH</button>
+</div>
+
+<div id="deck">
+
+  <!-- SLIDE 1 -->
+  <section class="slide active">
+    <div class="kicker">0:00 – 1:00 · AA PARA CONTROL</div>
+    <div class="lang-block lang-es">
+      <h1>Control óptimo cuántico:<br>GRAPE y CRAB</h1>
+      <p class="body-text muted" style="font-size:1.2rem;">Presentación bilingüe — usa el interruptor arriba para cambiar de idioma.</p>
+    </div>
+    <div class="lang-block lang-en">
+      <h1>Quantum optimal control:<br>GRAPE and CRAB</h1>
+      <p class="body-text muted" style="font-size:1.2rem;">Bilingual presentation — use the switch above to change language.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 2 -->
+  <section class="slide">
+    <div class="kicker">Definición · Definition</div>
+    <div class="lang-block lang-es"><h1>¿Qué es el control óptimo cuántico?</h1></div>
+    <div class="lang-block lang-en"><h1>What is quantum optimal control?</h1></div>
+    <div class="cards">
+      <div class="card">
+        <div class="lang-block lang-es">
+          <p>El control óptimo cuántico busca un campo de control dependiente del tiempo ε(t) (o amplitudes discretizadas u_k) que lleve a un sistema desde un estado o unitaria inicial hasta un objetivo con máxima fidelidad, sujeto a restricciones físicas de ancho de banda y amplitud.</p>
+        </div>
+        <div class="lang-block lang-en">
+          <p>Quantum optimal control seeks a time-dependent control field ε(t) (or discretized amplitudes u_k) that drives a system from an initial state or unitary to a target with maximum fidelity, subject to physical bandwidth and amplitude constraints.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 3 -->
+  <section class="slide">
+    <div class="kicker">GRAPE</div>
+    <div class="lang-block lang-es"><h1>GRAPE — Gradient Ascent Pulse Engineering</h1></div>
+    <div class="lang-block lang-en"><h1>GRAPE — Gradient Ascent Pulse Engineering</h1></div>
+
+    <div class="lang-block lang-es">
+      <p class="body-text">Se discretiza el pulso en N intervalos de duración Δt, cada uno con amplitud de control constante u_k sobre el Hamiltoniano de control H_c.</p>
+    </div>
+    <div class="lang-block lang-en">
+      <p class="body-text">The pulse is discretized into N intervals of duration Δt, each with a constant control amplitude u_k acting on the control Hamiltonian H_c.</p>
+    </div>
+
+    <div class="formula-box">
+      U = Π_(k=N..1) exp[ −i(H_d + u_k·H_c)·Δt ]
+      <div class="sub">F = |Tr(U_target† U)|² / d²</div>
+      <div class="lang-block lang-es cap">Propagador total y fidelidad.</div>
+      <div class="lang-block lang-en cap">Total propagator and fidelity.</div>
+    </div>
+
+    <div class="lang-block lang-es">
+      <p class="body-text">GRAPE calcula analíticamente el gradiente exacto ∂F/∂u_k y realiza ascenso de gradiente — rápido y preciso con un simulador diferenciable.</p>
+    </div>
+    <div class="lang-block lang-en">
+      <p class="body-text">GRAPE analytically computes the exact gradient ∂F/∂u_k and performs gradient ascent — fast and precise given a differentiable simulator.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 4 -->
+  <section class="slide">
+    <div class="kicker">Análisis · Analysis</div>
+    <div class="lang-block lang-es"><h1>El gradiente de GRAPE</h1></div>
+    <div class="lang-block lang-en"><h1>The GRAPE gradient</h1></div>
+
+    <div class="lang-block lang-es">
+      <p class="body-text">Definiendo el estado propagado hacia adelante ρ_k = U_(1..k)ρ_0 U_(1..k)† y el objetivo propagado hacia atrás λ_k = U_(k+1..N)† U_target, el gradiente en el intervalo k es:</p>
+    </div>
+    <div class="lang-block lang-en">
+      <p class="body-text">Defining the forward-propagated state ρ_k = U_(1..k)ρ_0 U_(1..k)† and the back-propagated target λ_k = U_(k+1..N)† U_target, the gradient at interval k is:</p>
+    </div>
+
+    <div class="formula-box" style="font-size:1.4rem;">
+      ∂F/∂u_k &nbsp;∝&nbsp; Im[ Tr(λ_k† · H_c · ρ_k) ]
+    </div>
+
+    <div class="lang-block lang-es">
+      <p class="body-text">→ El gradiente de cada intervalo se obtiene con un único barrido hacia adelante y uno hacia atrás, no con N² simulaciones separadas.</p>
+    </div>
+    <div class="lang-block lang-en">
+      <p class="body-text">→ Each interval's gradient comes from a single forward sweep and a single backward sweep, not N² separate simulations.</p>
+    </div>
+  </section>
+
+  <!-- SLIDE 4B — WHERE ARE QUBIT AND GATE -->
+  <section class="slide">
+    <div class="kicker">Mapa de la ecuación · Equation map</div>
+    <div class="lang-block lang-es"><h1>¿Dónde están el qubit y la puerta en esta ecuación?</h1></div>
+    <div class="lang-block lang-en"><h1>Where are the qubit and the gate in this equation?</h1></div>
+
+    <div class="eq-hero">
+      U = Π<sub>k=N..1</sub> exp[ −i(H_d + u_k·H_c)·Δt ] &nbsp;&nbsp; F = |Tr(U_target† U)|² / d²
+    </div>
+
+    <div class="legend-grid">
+      <div class="litem">
+        <div class="sym">d = 2</div>
+        <div class="lang-block lang-es"><p>Un qubit → matrices 2×2. Aquí es donde entra literalmente "el qubit": el tamaño del espacio de Hilbert.</p></div>
+        <div class="lang-block lang-en"><p>One qubit → 2×2 matrices. This is where "qubit" literally enters — the size of the Hilbert space.</p></div>
+      </div>
+      <div class="litem">
+        <div class="sym">H_d</div>
+        <div class="lang-block lang-es"><p>Término de deriva — la energía propia del qubit (p. ej. un error de desafinación), siempre presente.</p></div>
+        <div class="lang-block lang-en"><p>Drift term — the qubit's own energy (e.g. a detuning error), always present.</p></div>
+      </div>
+      <div class="litem">
+        <div class="sym">H_c</div>
+        <div class="lang-block lang-es"><p>Cómo se acopla el control — físicamente, σₓ y σᵥ, las dos cuadraturas del pulso de microondas.</p></div>
+        <div class="lang-block lang-en"><p>How the control couples in — physically, σₓ and σᵥ, the two microwave drive quadratures.</p></div>
+      </div>
+      <div class="litem">
+        <div class="sym">u_k</div>
+        <div class="lang-block lang-es"><p>La amplitud del pulso en el instante k — el número que GRAPE realmente resuelve.</p></div>
+        <div class="lang-block lang-en"><p>The pulse height at time-slice k — the number GRAPE actually solves for.</p></div>
+      </div>
+      <div class="litem">
+        <div class="sym">U</div>
+        <div class="lang-block lang-es"><p>La puerta que tu pulso realmente implementa, al multiplicar todas las rotaciones diminutas.</p></div>
+        <div class="lang-block lang-en"><p>The gate your pulse actually implements, once you multiply all the tiny rotations together.</p></div>
+      </div>
+      <div class="litem">
+        <div class="sym">U_target</div>
+        <div class="lang-block lang-es"><p>La puerta que querías (X, Hadamard, CNOT...) — una matriz unitaria fija.</p></div>
+        <div class="lang-block lang-en"><p>The gate you wanted (X, Hadamard, CNOT...) — a fixed unitary matrix.</p></div>
+      </div>
+    </div>
+
+    <div class="hint-row">
+      <div class="lang-block lang-es body-text muted">El qubit no es un símbolo aparte — está en el tamaño de las matrices y en qué operadores (Pauli) se eligen. La puerta es U mismo, comparado contra U_target.</div>
+      <div class="lang-block lang-en body-text muted">The qubit isn't a separate symbol — it's in the matrix size and which Pauli operators you pick. The gate is U itself, judged against U_target.</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 5 -->
+  <section class="slide">
+    <div class="kicker">Analogía · Analogy</div>
+
+    <div class="lang-block lang-es"><h1>Ascenso vs. descenso — la misma montaña</h1></div>
+    <div class="lang-block lang-en"><h1>Ascent vs. descent — the same mountain</h1></div>
+
+    <div class="cards">
+      <div class="card">
+        <h3>▲ Gradient Ascent</h3>
+        <div class="lang-block lang-es">
+          <p>Subir hacia la cima de la montaña — en la misma dirección del gradiente. Se usa para maximizar una cantidad, como la fidelidad F.</p>
+        </div>
+        <div class="lang-block lang-en">
+          <p>Climbing toward the mountain's peak — in the same direction as the gradient. Used to maximize a quantity, like fidelity F.</p>
+        </div>
+        <div class="formula-box" style="font-size:1rem; padding:0.8rem 1rem;">u_new = u_old + η·(∂F/∂u)</div>
+        <div class="lang-block lang-es"><p class="body-text muted" style="font-size:0.85rem;">Ejemplo: GRAPE (fidelidad ↑)</p></div>
+        <div class="lang-block lang-en"><p class="body-text muted" style="font-size:0.85rem;">Example: GRAPE (fidelity ↑)</p></div>
+      </div>
+      <div class="card alt">
+        <h3>▼ Gradient Descent</h3>
+        <div class="lang-block lang-es">
+          <p>Bajar hacia el valle — en dirección opuesta al gradiente. Se usa para minimizar una cantidad, como una función de pérdida (loss).</p>
+        </div>
+        <div class="lang-block lang-en">
+          <p>Descending toward the valley — in the direction opposite the gradient. Used to minimize a quantity, like a loss function.</p>
+        </div>
+        <div class="formula-box" style="font-size:1rem; padding:0.8rem 1rem;">u_new = u_old − η·(∂L/∂u)</div>
+        <div class="lang-block lang-es"><p class="body-text muted" style="font-size:0.85rem;">Ejemplo: redes neuronales (pérdida ↓)</p></div>
+        <div class="lang-block lang-en"><p class="body-text muted" style="font-size:0.85rem;">Example: neural networks (loss ↓)</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 6 -->
+  <section class="slide">
+    <div class="kicker">Ejemplo · Example</div>
+    <div class="lang-block lang-es"><h1>Ejemplo simple de ascenso de gradiente</h1></div>
+    <div class="lang-block lang-en"><h1>Simple example of gradient ascent</h1></div>
+
+    <p class="body-text" style="font-family:var(--mono); color:var(--gold); font-size:0.95rem;">
+      F(u) = −(u − 3)² + 10 &nbsp;&nbsp; dF/du = −2(u − 3) &nbsp;&nbsp; u_new = u_old + η·(dF/du)
+    </p>
+
+    <div class="cards">
+      <div class="card" style="flex:1.2;">
+        <table>
+          <tr><th>Paso · Step</th><th>u</th><th>dF/du</th><th>F(u)</th></tr>
+          <tr><td>0</td><td>0.00</td><td>6.00</td><td>1.00</td></tr>
+          <tr><td>1</td><td>0.60</td><td>4.80</td><td>4.24</td></tr>
+          <tr><td>2</td><td>1.08</td><td>3.84</td><td>6.31</td></tr>
+          <tr><td>3</td><td>1.46</td><td>3.07</td><td>7.63</td></tr>
+          <tr><td>4</td><td>1.77</td><td>2.46</td><td>8.49</td></tr>
+          <tr><td>∞</td><td>3.00</td><td>0.00</td><td>10.00</td></tr>
+        </table>
+      </div>
+      <div class="card alt">
+        <div class="lang-block lang-es">
+          <p>En cada paso, u se mueve en la MISMA dirección que el gradiente (+ dirección). F aumenta progresivamente hasta el máximo F = 10 en u = 3.</p>
+        </div>
+        <div class="lang-block lang-en">
+          <p>At each step, u moves in the SAME direction as the gradient (+ direction). F progressively increases toward the maximum F = 10 at u = 3.</p>
+        </div>
+        <p class="body-text" style="font-family:var(--mono); color:var(--gold);">η (learning rate) = 0.1</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SLIDE 7 -->
+  <section class="slide">
+    <div class="kicker">Aplicación · Application</div>
+    <div class="lang-block lang-es"><h1>Del ejemplo simple a GRAPE</h1></div>
+    <div class="lang-block lang-en"><h1>From the simple example to GRAPE</h1></div>
+
+    <div class="card" style="flex:1;">
+      <table>
+        <tr>
+          <th><span class="lang-block lang-es">Ejemplo simple</span><span class="lang-block lang-en">Simple example</span></th>
+          <th><span class="lang-block lang-es">GRAPE (control cuántico)</span><span class="lang-block lang-en">GRAPE (quantum control)</span></th>
+        </tr>
+        <tr><td>u (variable)</td><td>u_k — <span class="lang-block lang-es">amplitud de control</span><span class="lang-block lang-en">control amplitude</span></td></tr>
+        <tr>
+          <td><span class="lang-block lang-es">F(u) (función a maximizar)</span><span class="lang-block lang-en">F(u) (function to maximize)</span></td>
+          <td>F — <span class="lang-block lang-es">fidelidad (0 a 1)</span><span class="lang-block lang-en">fidelity (0 to 1)</span></td>
+        </tr>
+        <tr><td>u_new = u_old + η·(dF/du)</td><td>u_k(new) = u_k(old) + η·(∂F/∂u_k)</td></tr>
+        <tr>
+          <td><span class="lang-block lang-es">Meta: F máxima</span><span class="lang-block lang-en">Goal: max F</span></td>
+          <td><span class="lang-block lang-es">Meta: F → 1 (fidelidad perfecta)</span><span class="lang-block lang-en">Goal: F → 1 (perfect fidelity)</span></td>
+        </tr>
+      </table>
+    </div>
+    <div class="lang-block lang-es" style="margin-top:1rem;"><p class="body-text">Cada amplitud de control u_k se ajusta en la dirección de su gradiente ∂F/∂u_k, y la fidelidad F sube paso a paso hacia 1.</p></div>
+    <div class="lang-block lang-en" style="margin-top:1rem;"><p class="body-text">Each control amplitude u_k is nudged in the direction of its gradient ∂F/∂u_k, and fidelity F climbs step by step toward 1.</p></div>
+  </section>
+
+  <!-- SLIDE 8 -->
+  <section class="slide">
+    <div class="kicker">Motivación · Motivation</div>
+    <div class="lang-block lang-es"><h1>¿Por qué la computación cuántica necesita esto?</h1></div>
+    <div class="lang-block lang-en"><h1>Why does quantum computing need this?</h1></div>
+
+    <div class="card" style="flex:1;">
+      <table>
+        <tr>
+          <th></th>
+          <th><span class="lang-block lang-es">Clásico</span><span class="lang-block lang-en">Classical</span></th>
+          <th><span class="lang-block lang-es">Cuántico</span><span class="lang-block lang-en">Quantum</span></th>
+        </tr>
+        <tr>
+          <td style="color:var(--gold); font-family:var(--serif); font-weight:bold;"><span class="lang-block lang-es">Señal de control</span><span class="lang-block lang-en">Control signal</span></td>
+          <td><span class="lang-block lang-es">Interruptor on/off</span><span class="lang-block lang-en">On/off switch</span></td>
+          <td><span class="lang-block lang-es">Forma de pulso continua u(t)</span><span class="lang-block lang-en">Continuous pulse shape u(t)</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--gold); font-family:var(--serif); font-weight:bold;"><span class="lang-block lang-es">Objetivo</span><span class="lang-block lang-en">Target</span></td>
+          <td>0 <span class="lang-block lang-es">ó</span><span class="lang-block lang-en">or</span> 1</td>
+          <td><span class="lang-block lang-es">Cualquier superposición</span><span class="lang-block lang-en">Any superposition state</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--gold); font-family:var(--serif); font-weight:bold;"><span class="lang-block lang-es">Tolerancia a error</span><span class="lang-block lang-en">Error tolerance</span></td>
+          <td><span class="lang-block lang-es">Alta (redundancia)</span><span class="lang-block lang-en">High (redundancy)</span></td>
+          <td><span class="lang-block lang-es">Muy baja (~99.9% fidelidad)</span><span class="lang-block lang-en">Very low (~99.9% fidelity)</span></td>
+        </tr>
+        <tr>
+          <td style="color:var(--gold); font-family:var(--serif); font-weight:bold;"><span class="lang-block lang-es">Se necesita</span><span class="lang-block lang-en">What's needed</span></td>
+          <td><span class="lang-block lang-es">Lógica simple</span><span class="lang-block lang-en">Simple logic</span></td>
+          <td>GRAPE / CRAB (<span class="lang-block lang-es">control óptimo</span><span class="lang-block lang-en">optimal control</span>)</td>
+        </tr>
+      </table>
+    </div>
+    <div class="lang-block lang-es" style="margin-top:1rem;"><p class="body-text">Un qubit es continuo, ruidoso y físicamente limitado — llevarlo con precisión a un estado objetivo es un problema de optimización.</p></div>
+    <div class="lang-block lang-en" style="margin-top:1rem;"><p class="body-text">A qubit is continuous, noisy, and physically constrained — precisely steering it to a target state is an optimization problem.</p></div>
+  </section>
+
+  <!-- SLIDE 9 -->
+  <section class="slide">
+    <div class="kicker">CRAB</div>
+    <div class="lang-block lang-es"><h1>CRAB — Chopped Random Basis</h1></div>
+    <div class="lang-block lang-en"><h1>CRAB — Chopped Random Basis</h1></div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="lang-block lang-es">
+          <p>CRAB parametriza el pulso con una base truncada de funciones (p. ej. senos/cosenos con frecuencias aleatorias) y optimiza solo esos pocos coeficientes con un algoritmo sin gradiente (p. ej. Nelder-Mead).</p>
+          <p class="muted">Útil cuando no se dispone de un simulador diferenciable o el gradiente exacto es difícil de calcular.</p>
+        </div>
+        <div class="lang-block lang-en">
+          <p>CRAB parametrizes the pulse with a truncated basis of functions (e.g. sines/cosines with randomized frequencies) and optimizes only those few coefficients with a gradient-free algorithm (e.g. Nelder-Mead).</p>
+          <p class="muted">Useful when no differentiable simulator is available, or the exact gradient is hard to compute.</p>
+        </div>
+      </div>
+    </div>
+    <div class="hint-row">
+      <div class="lang-block lang-es body-text muted">GRAPE: gradiente exacto, N grande &nbsp;·&nbsp; CRAB: sin gradiente, pocos parámetros</div>
+      <div class="lang-block lang-en body-text muted">GRAPE: exact gradient, large N &nbsp;·&nbsp; CRAB: gradient-free, few parameters</div>
+    </div>
+  </section>
+
+  <!-- SLIDE 10 -->
+  <section class="slide">
+    <div class="kicker">Resumen · Summary</div>
+    <div class="lang-block lang-es"><h1>Puntos clave</h1></div>
+    <div class="lang-block lang-en"><h1>Key takeaways</h1></div>
+
+    <div class="takeaway-list">
+      <div class="takeaway">
+        <div class="num">1</div>
+        <div class="txt">
+          <p class="lang-block lang-es">Control óptimo cuántico diseña u(t) para llevar un sistema a un objetivo con máxima fidelidad.</p>
+          <p class="lang-block lang-en">Quantum optimal control designs u(t) to steer a system to a target with maximum fidelity.</p>
+        </div>
+      </div>
+      <div class="takeaway">
+        <div class="num">2</div>
+        <div class="txt">
+          <p class="lang-block lang-es">GRAPE usa el gradiente exacto ∂F/∂u_k (forward + backward sweep) y asciende hacia F = 1.</p>
+          <p class="lang-block lang-en">GRAPE uses the exact gradient ∂F/∂u_k (forward + backward sweep) and ascends toward F = 1.</p>
+        </div>
+      </div>
+      <div class="takeaway">
+        <div class="num">3</div>
+        <div class="txt">
+          <p class="lang-block lang-es">Ascenso y descenso de gradiente son la misma idea matemática; solo cambia el signo y la meta.</p>
+          <p class="lang-block lang-en">Gradient ascent and descent are the same mathematical idea; only the sign and the goal change.</p>
+        </div>
+      </div>
+      <div class="takeaway">
+        <div class="num">4</div>
+        <div class="txt">
+          <p class="lang-block lang-es">Los qubits son continuos, ruidosos y físicamente limitados — de ahí la necesidad de control óptimo.</p>
+          <p class="lang-block lang-en">Qubits are continuous, noisy, and physically constrained — hence the need for optimal control.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div id="nav">
+  <button onclick="go(-1)">&#8592;</button>
+  <div id="dots"></div>
+  <button onclick="go(1)">&#8594;</button>
+</div>
+<div id="pageno"></div>
+
+<script>
+  const slides = document.querySelectorAll('.slide');
+  const total = slides.length;
+  let current = 0;
+  let lang = 'es';
+
+  const dotsEl = document.getElementById('dots');
+  for(let i=0;i<total;i++){
+    const d = document.createElement('div');
+    d.className = 'dot' + (i===0 ? ' active' : '');
+    d.onclick = () => { current = i; render(); };
+    dotsEl.appendChild(d);
+  }
+
+  function render(){
+    slides.forEach((s,i) => s.classList.toggle('active', i===current));
+    document.querySelectorAll('.dot').forEach((d,i) => d.classList.toggle('active', i===current));
+    document.getElementById('pageno').textContent = (current+1).toString().padStart(2,'0') + ' / ' + total.toString().padStart(2,'0');
+  }
+
+  function go(delta){
+    current = (current + delta + total) % total;
+    render();
+  }
+
+  function setLang(l){
+    lang = l;
+    document.getElementById('btn-es').classList.toggle('active', l==='es');
+    document.getElementById('btn-en').classList.toggle('active', l==='en');
+    document.querySelectorAll('.lang-es').forEach(el => el.classList.toggle('visible', l==='es'));
+    document.querySelectorAll('.lang-en').forEach(el => el.classList.toggle('visible', l==='en'));
+    document.documentElement.lang = l;
+  }
+
+  document.addEventListener('keydown', (e) => {
+    if(e.key === 'ArrowRight') go(1);
+    if(e.key === 'ArrowLeft') go(-1);
+  });
+
+  setLang('es');
+  render();
+</script>
+
+</body>
+</html>

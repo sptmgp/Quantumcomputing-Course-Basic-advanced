@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Calibración Autónoma de Puertas / Autonomous Gate Calibration</title>
+<style>
+  :root {
+    --bg: #0B0E1A;
+    --panel: #141829;
+    --panel-line: #262C46;
+    --text: #E4E7F5;
+    --muted: #7B82A3;
+    --cyan: #4FD1C5;
+    --magenta: #F471B5;
+    --correct: #34D399;
+    --incorrect: #FB7185;
+    --font-display: 'Space Grotesk', 'Avenir Next', 'Century Gothic', sans-serif;
+    --font-body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100vh;
+  }
+  .wrap { max-width: 720px; margin: 0 auto; padding: 32px 20px 80px; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; gap: 16px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
+  h1 { font-family: var(--font-display); font-size: 26px; font-weight: 600; margin: 0; letter-spacing: -0.01em; line-height: 1.25; }
+
+  .langToggle {
+    display: flex; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 999px;
+    padding: 3px; flex-shrink: 0;
+  }
+  .langToggle button {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.04em;
+    padding: 6px 14px; border-radius: 999px; border: none; background: transparent; color: var(--muted); cursor: pointer;
+    transition: all 0.2s ease;
+  }
+  .langToggle button.active { background: var(--cyan); color: #06201C; }
+
+  /* pulse waveform signature */
+  .waveWrap { margin: 24px 0 8px; border-radius: 10px; background: var(--panel); border: 1px solid var(--panel-line); padding: 14px 16px; }
+  .waveLabel { font-family: var(--font-mono); font-size: 10.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 6px; display: flex; justify-content: space-between; }
+  canvas#wave { width: 100%; height: 64px; display: block; }
+
+  /* progress */
+  .progress { display: flex; gap: 5px; margin: 20px 0 24px; }
+  .progress .seg { flex: 1; height: 4px; border-radius: 2px; background: var(--panel-line); overflow: hidden; }
+  .progress .seg .fill { height: 100%; width: 0%; background: var(--cyan); transition: width 0.3s ease; }
+  .progress .seg.correct .fill { background: var(--correct); width: 100% !important; }
+  .progress .seg.incorrect .fill { background: var(--incorrect); width: 100% !important; }
+
+  .card { background: var(--panel); border: 1px solid var(--panel-line); border-radius: 12px; padding: 26px 24px; }
+  .qNum { font-family: var(--font-mono); font-size: 12px; color: var(--muted); margin-bottom: 10px; }
+  .qText { font-size: 18px; line-height: 1.5; margin: 0 0 20px; font-weight: 500; }
+  .qText code, .expl code { font-family: var(--font-mono); background: rgba(79,209,197,0.12); color: var(--cyan); padding: 2px 6px; border-radius: 4px; font-size: 0.92em; }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+  .opt {
+    display: flex; align-items: flex-start; gap: 12px; text-align: left;
+    background: rgba(255,255,255,0.02); border: 1px solid var(--panel-line); border-radius: 8px;
+    padding: 13px 15px; cursor: pointer; color: var(--text); font-family: var(--font-body); font-size: 14.5px;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .opt:hover:not(.locked) { border-color: var(--cyan); background: rgba(79,209,197,0.06); }
+  .opt .letter { font-family: var(--font-mono); font-weight: 700; color: var(--muted); flex-shrink: 0; }
+  .opt.correctPick { border-color: var(--correct); background: rgba(52,211,153,0.1); }
+  .opt.correctPick .letter { color: var(--correct); }
+  .opt.wrongPick { border-color: var(--incorrect); background: rgba(251,113,133,0.1); }
+  .opt.wrongPick .letter { color: var(--incorrect); }
+  .opt.locked { cursor: default; }
+
+  .expl {
+    margin-top: 18px; padding: 14px 16px; border-radius: 8px;
+    background: rgba(255,255,255,0.03); border-left: 3px solid var(--cyan); font-size: 14px; line-height: 1.6; color: var(--text);
+    display: none;
+  }
+  .expl.show { display: block; }
+  .expl .tag { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; display: block; }
+  .expl.isCorrect .tag { color: var(--correct); }
+  .expl.isWrong .tag { color: var(--incorrect); }
+
+  .footer { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+  .score { font-family: var(--font-mono); font-size: 13px; color: var(--muted); }
+  .score b { color: var(--text); }
+  .nextBtn {
+    font-family: var(--font-body); font-weight: 600; font-size: 14px; padding: 10px 20px; border-radius: 7px;
+    background: var(--cyan); color: #06201C; border: none; cursor: pointer; opacity: 0; pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .nextBtn.ready { opacity: 1; pointer-events: auto; }
+  .nextBtn:hover { opacity: 0.85; }
+
+  .doneCard { text-align: center; padding: 40px 24px; }
+  .doneCard .bigScore { font-family: var(--font-display); font-size: 48px; color: var(--cyan); margin: 10px 0; }
+  .restartBtn {
+    margin-top: 20px; font-family: var(--font-body); font-weight: 600; font-size: 14px; padding: 11px 22px;
+    border-radius: 7px; background: transparent; border: 1px solid var(--cyan); color: var(--cyan); cursor: pointer;
+  }
+  .restartBtn:hover { background: rgba(79,209,197,0.1); }
+
+  @media (max-width: 500px) {
+    h1 { font-size: 21px; }
+    .qText { font-size: 16.5px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <div class="eyebrow" data-i18n="eyebrow"></div>
+      <h1 data-i18n="title"></h1>
+    </div>
+    <div class="langToggle">
+      <button id="btnEs">ES</button>
+      <button id="btnEn">EN</button>
+    </div>
+  </div>
+
+  <div class="waveWrap">
+    <div class="waveLabel">
+      <span data-i18n="waveLabel"></span>
+      <span id="waveState" class="mono"></span>
+    </div>
+    <canvas id="wave"></canvas>
+  </div>
+
+  <div class="progress" id="progress"></div>
+
+  <div id="quizArea"></div>
+</div>
+
+<script>
+const I18N = {
+  es: {
+    eyebrow: "Cuestionario · Control Cuántico",
+    title: "Calibración Autónoma de Puertas Basada en RL",
+    waveLabel: "Traza del pulso de control",
+    waveIdle: "en espera",
+    waveConverged: "convergido",
+    waveDrift: "en deriva",
+    question: "Pregunta",
+    of: "de",
+    score: "Puntaje",
+    next: "Siguiente pregunta",
+    finish: "Ver resultado",
+    correctTag: "Correcto",
+    wrongTag: "Incorrecto",
+    doneTitle: "Cuestionario completado",
+    doneSub: "Respuestas correctas",
+    restart: "Reiniciar cuestionario",
+  },
+  en: {
+    eyebrow: "Quiz · Quantum Control",
+    title: "RL-Based Autonomous Gate Calibration",
+    waveLabel: "Control pulse trace",
+    waveIdle: "idle",
+    waveConverged: "converged",
+    waveDrift: "drifting",
+    question: "Question",
+    of: "of",
+    score: "Score",
+    next: "Next question",
+    finish: "See results",
+    correctTag: "Correct",
+    wrongTag: "Incorrect",
+    doneTitle: "Quiz complete",
+    doneSub: "Correct answers",
+    restart: "Restart quiz",
+  }
+};
+
+const QUESTIONS = [
+  {
+    es: {
+      q: "En la formulación MDP de esta calibración, ¿qué representa el <em>estado</em>?",
+      opts: ["La fidelidad medida", "Los parámetros de pulso actuales", "El operador Hamiltoniano", "El número de pasos de entrenamiento"],
+      expl: "El estado es exactamente lo que el agente puede observar y ajustar: los parámetros de pulso vigentes (aquí, la amplitud)."
+    },
+    en: {
+      q: "In the MDP formulation of this calibration, what does the <em>state</em> represent?",
+      opts: ["The measured fidelity", "The current pulse parameters", "The Hamiltonian operator", "The number of training steps"],
+      expl: "The state is exactly what the agent can observe and adjust: the current pulse parameters (here, the amplitude)."
+    },
+    correct: 1
+  },
+  {
+    es: {
+      q: "¿Qué representa la <em>acción</em> en este MDP?",
+      opts: ["Medir la fidelidad", "Un ajuste al parámetro de pulso", "Aplicar sigmaz()", "Cambiar el estado objetivo"],
+      expl: "La acción es el cambio que el agente aplica al parámetro (por ejemplo, <code>amp += lr * grad</code>)."
+    },
+    en: {
+      q: "What does the <em>action</em> represent in this MDP?",
+      opts: ["Measuring the fidelity", "An adjustment to the pulse parameter", "Applying sigmaz()", "Changing the target state"],
+      expl: "The action is the change the agent applies to the parameter (e.g., <code>amp += lr * grad</code>)."
+    },
+    correct: 1
+  },
+  {
+    es: {
+      q: "La recompensa se define como −|F_objetivo − F_medida|. ¿Por qué el signo negativo?",
+      opts: ["Para penalizar solo fidelidades bajas", "Porque las recompensas deben ser siempre negativas", "Para que maximizar la recompensa equivalga a minimizar el error de fidelidad", "Es un error tipográfico, debería ser positivo"],
+      expl: "Un agente RL maximiza la recompensa; poner el signo negativo convierte \"minimizar el error\" en \"maximizar la recompensa\", que es lo que el algoritmo realmente optimiza."
+    },
+    en: {
+      q: "The reward is defined as −|F_target − F_measured|. Why the negative sign?",
+      opts: ["To penalize only low fidelities", "Because rewards must always be negative", "So that maximizing the reward is equivalent to minimizing the fidelity error", "It's a typo, it should be positive"],
+      expl: "An RL agent maximizes reward; the negative sign turns \"minimize the error\" into \"maximize the reward,\" which is what the algorithm actually optimizes."
+    },
+    correct: 2
+  },
+  {
+    es: {
+      q: "En el código, <code>sigmax()</code> se usa como parte del Hamiltoniano de control. ¿Qué efecto físico modela?",
+      opts: ["Decaimiento del qubit", "Rotación en torno al eje X de la esfera de Bloch", "Medición en la base Z", "Ruido térmico"],
+      expl: "Un Hamiltoniano proporcional a σx genera rotaciones alrededor del eje X — el mecanismo estándar para llevar el qubit de |0⟩ a |1⟩."
+    },
+    en: {
+      q: "In the code, <code>sigmax()</code> is used as part of the control Hamiltonian. What physical effect does it model?",
+      opts: ["Qubit decay", "Rotation about the X axis of the Bloch sphere", "Measurement in the Z basis", "Thermal noise"],
+      expl: "A Hamiltonian proportional to σx generates rotations about the X axis — the standard mechanism for driving the qubit from |0⟩ to |1⟩."
+    },
+    correct: 1
+  },
+  {
+    es: {
+      q: "¿Qué calcula <code>sesolve</code> en este fragmento de código?",
+      opts: ["Un ajuste de mínimos cuadrados clásico", "La evolución temporal del estado cuántico bajo el Hamiltoniano dado", "La matriz de densidad reducida", "Una transformada de Fourier del pulso"],
+      expl: "<code>sesolve</code> (Schrödinger equation solver) integra la ecuación de Schrödinger para obtener la evolución del estado bajo H(t)."
+    },
+    en: {
+      q: "What does <code>sesolve</code> compute in this code snippet?",
+      opts: ["A classical least-squares fit", "The time evolution of the quantum state under the given Hamiltonian", "The reduced density matrix", "A Fourier transform of the pulse"],
+      expl: "<code>sesolve</code> (Schrödinger equation solver) integrates the Schrödinger equation to obtain the state's evolution under H(t)."
+    },
+    correct: 1
+  },
+  {
+    es: {
+      q: "El bucle de optimización usa <code>grad = (gate_fidelity(amp+0.01) - gate_fidelity(amp-0.01))/0.02</code>. ¿Qué técnica es esta?",
+      opts: ["Descenso de gradiente estocástico con backpropagation", "Diferencias finitas centradas para estimar el gradiente numéricamente", "Método de Newton-Raphson", "Recocido simulado (simulated annealing)"],
+      expl: "Es la fórmula clásica de diferencia finita centrada: (f(x+h)−f(x−h))/(2h), usada aquí porque no hay una expresión analítica del gradiente."
+    },
+    en: {
+      q: "The optimization loop uses <code>grad = (gate_fidelity(amp+0.01) - gate_fidelity(amp-0.01))/0.02</code>. What technique is this?",
+      opts: ["Stochastic gradient descent with backpropagation", "Centered finite differences to numerically estimate the gradient", "Newton-Raphson method", "Simulated annealing"],
+      expl: "This is the classic centered finite-difference formula: (f(x+h)−f(x−h))/(2h), used here because there's no analytical expression for the gradient."
+    },
+    correct: 1
+  },
+  {
+    es: {
+      q: "¿Qué papel juega <code>lr</code> (learning rate) en este algoritmo?",
+      opts: ["Define cuántas veces se mide la fidelidad", "Controla el tamaño del paso al actualizar la amplitud en cada iteración", "Es el ruido añadido al Hamiltoniano", "Define el tiempo total de evolución cuántica"],
+      expl: "<code>lr</code> escala cuánto se mueve <code>amp</code> en la dirección del gradiente en cada paso — un learning rate muy alto puede hacer que la optimización oscile o diverja."
+    },
+    en: {
+      q: "What role does <code>lr</code> (learning rate) play in this algorithm?",
+      opts: ["It defines how many times fidelity is measured", "It controls the step size when updating the amplitude at each iteration", "It's the noise added to the Hamiltonian", "It defines the total quantum evolution time"],
+      expl: "<code>lr</code> scales how much <code>amp</code> moves in the gradient direction at each step — too high a learning rate can cause the optimization to oscillate or diverge."
+    },
+    correct: 1
+  },
+  {
+    es: {
+      q: "Esta estrategia de calibración (ajustar amplitud vía gradiente) es un caso simplificado de RL. ¿Cuál sería la ventaja principal de usar RL completo (por ejemplo, PPO) en vez de este ascenso de gradiente simple?",
+      opts: ["RL completo no necesita medir la fidelidad", "RL completo puede manejar múltiples parámetros acoplados y no linealidades sin necesitar un gradiente explícito", "RL completo siempre converge más rápido en un solo parámetro", "RL completo elimina la necesidad de simular el Hamiltoniano"],
+      expl: "Cuando hay muchos parámetros de pulso interdependientes (amplitud, fase, duración, forma), un método RL con política aprendida generaliza mejor que ajustar un gradiente numérico parámetro por parámetro."
+    },
+    en: {
+      q: "This calibration strategy (adjusting amplitude via gradient) is a simplified case of RL. What would be the main advantage of using full RL (e.g., PPO) instead of this simple gradient ascent?",
+      opts: ["Full RL doesn't need to measure fidelity", "Full RL can handle multiple coupled parameters and nonlinearities without needing an explicit gradient", "Full RL always converges faster on a single parameter", "Full RL eliminates the need to simulate the Hamiltonian"],
+      expl: "When there are many interdependent pulse parameters (amplitude, phase, duration, shape), an RL method with a learned policy generalizes better than adjusting a numerical gradient parameter by parameter."
+    },
+    correct: 1
+  },
+  {
+    es: {
+      q: "Si <code>gate_fidelity(amp)</code> devolviera siempre 1.0 sin importar <code>amp</code>, ¿qué pasaría con el algoritmo?",
+      opts: ["Convergería instantáneamente al valor óptimo real", "El gradiente estimado sería ≈0, y amp casi no cambiaría entre iteraciones", "El programa lanzaría un error de división por cero", "La fidelidad seguiría subiendo indefinidamente"],
+      expl: "Si la función es constante, la diferencia finita en el numerador es ≈0, así que el gradiente estimado es ≈0 y no hay actualización significativa — una señal de que el sistema ya no distingue mejoras."
+    },
+    en: {
+      q: "If <code>gate_fidelity(amp)</code> always returned 1.0 regardless of <code>amp</code>, what would happen to the algorithm?",
+      opts: ["It would instantly converge to the true optimal value", "The estimated gradient would be ≈0, and amp would barely change between iterations", "The program would throw a division-by-zero error", "The fidelity would keep increasing indefinitely"],
+      expl: "If the function is constant, the finite-difference numerator is ≈0, so the estimated gradient is ≈0 and there's no meaningful update — a signal that the system can no longer distinguish improvements."
+    },
+    correct: 1
+  },
+  {
+    es: {
+      q: "¿Cuál es la limitación más importante de este enfoque de \"calibración por gradiente en 1D\" frente a la calibración real de hardware?",
+      opts: ["QuTiP no puede simular estados de un solo qubit", "La fidelidad no puede definirse matemáticamente", "El hardware real tiene ruido, deriva temporal y múltiples parámetros acoplados que un ajuste de un solo parámetro no captura", "Los Hamiltonianos reales nunca usan σx"],
+      expl: "En hardware real, calibrar un solo parámetro con un gradiente limpio ignora ruido, deriva (drift) y acoplamientos entre parámetros — por eso los sistemas reales usan lazos de calibración más robustos (Bayesianos, RL completo, o barridos multi-parámetro)."
+    },
+    en: {
+      q: "What is the most important limitation of this \"1D gradient calibration\" approach compared to real hardware calibration?",
+      opts: ["QuTiP cannot simulate single-qubit states", "Fidelity cannot be defined mathematically", "Real hardware has noise, temporal drift, and multiple coupled parameters that a single-parameter adjustment doesn't capture", "Real Hamiltonians never use σx"],
+      expl: "On real hardware, calibrating a single parameter with a clean gradient ignores noise, drift, and couplings between parameters — which is why real systems use more robust calibration loops (Bayesian, full RL, or multi-parameter sweeps)."
+    },
+    correct: 2
+  }
+];
+
+let lang = 'es';
+let current = 0;
+let score = 0;
+let answered = false;
+const results = new Array(QUESTIONS.length).fill(null); // null | true | false
+
+function t(key) { return I18N[lang][key]; }
+
+function setLang(l) {
+  lang = l;
+  document.getElementById('btnEs').classList.toggle('active', l === 'es');
+  document.getElementById('btnEn').classList.toggle('active', l === 'en');
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    el.textContent = t(el.getAttribute('data-i18n'));
+  });
+  renderProgress();
+  renderQuestion();
+}
+
+function renderProgress() {
+  const el = document.getElementById('progress');
+  el.innerHTML = '';
+  QUESTIONS.forEach((_, i) => {
+    const seg = document.createElement('div');
+    seg.className = 'seg';
+    if (results[i] === true) seg.classList.add('correct');
+    if (results[i] === false) seg.classList.add('incorrect');
+    const fill = document.createElement('div');
+    fill.className = 'fill';
+    if (i < current) fill.style.width = '100%';
+    seg.appendChild(fill);
+    el.appendChild(seg);
+  });
+}
+
+function renderQuestion() {
+  const area = document.getElementById('quizArea');
+  if (current >= QUESTIONS.length) {
+    renderDone(area);
+    return;
+  }
+  const item = QUESTIONS[current];
+  const data = item[lang];
+  const wasAnswered = results[current] !== null;
+  answered = wasAnswered;
+
+  area.innerHTML = `
+    <div class="card">
+      <div class="qNum">${t('question')} ${current+1} ${t('of')} ${QUESTIONS.length}</div>
+      <p class="qText">${data.q}</p>
+      <div class="options" id="opts"></div>
+      <div class="expl" id="expl"></div>
+      <div class="footer">
+        <div class="score">${t('score')}: <b>${score}</b> / ${QUESTIONS.length}</div>
+        <button class="nextBtn" id="nextBtn">${current === QUESTIONS.length-1 ? t('finish') : t('next')}</button>
+      </div>
+    </div>
+  `;
+
+  const optsEl = document.getElementById('opts');
+  data.opts.forEach((optText, i) => {
+    const div = document.createElement('div');
+    div.className = 'opt';
+    div.innerHTML = `<span class="letter">${String.fromCharCode(65+i)}</span><span>${optText}</span>`;
+    div.addEventListener('click', () => selectOption(i));
+    optsEl.appendChild(div);
+  });
+
+  if (wasAnswered) {
+    lockOptions(item.correct, results[current] ? item.correct : lastSelectedWrong[current]);
+    showExplanation(item, results[current]);
+    document.getElementById('nextBtn').classList.add('ready');
+  }
+
+  setWaveState(wasAnswered ? (results[current] ? 'converged' : 'drift') : 'idle');
+  document.getElementById('nextBtn').addEventListener('click', () => {
+    current++;
+    renderProgress();
+    renderQuestion();
+  });
+}
+
+const lastSelectedWrong = {};
+
+function selectOption(i) {
+  if (answered) return;
+  answered = true;
+  const item = QUESTIONS[current];
+  const isCorrect = i === item.correct;
+  results[current] = isCorrect;
+  if (isCorrect) score++;
+  else lastSelectedWrong[current] = i;
+
+  lockOptions(item.correct, isCorrect ? item.correct : i);
+  showExplanation(item, isCorrect);
+  setWaveState(isCorrect ? 'converged' : 'drift');
+  renderProgress();
+
+  // refresh score display + next button
+  document.querySelector('.score').innerHTML = `${t('score')}: <b>${score}</b> / ${QUESTIONS.length}`;
+  document.getElementById('nextBtn').classList.add('ready');
+}
+
+function lockOptions(correctIdx, pickedIdx) {
+  const opts = document.querySelectorAll('.opt');
+  opts.forEach((el, i) => {
+    el.classList.add('locked');
+    if (i === correctIdx) el.classList.add('correctPick');
+    if (i === pickedIdx && pickedIdx !== correctIdx) el.classList.add('wrongPick');
+  });
+}
+
+function showExplanation(item, isCorrect) {
+  const el = document.getElementById('expl');
+  el.classList.add('show', isCorrect ? 'isCorrect' : 'isWrong');
+  el.innerHTML = `<span class="tag">${isCorrect ? t('correctTag') : t('wrongTag')}</span>${item[lang].expl}`;
+}
+
+function renderDone(area) {
+  area.innerHTML = `
+    <div class="card doneCard">
+      <div class="qNum" style="justify-content:center; display:flex;">${t('doneTitle')}</div>
+      <div class="bigScore">${score} / ${QUESTIONS.length}</div>
+      <div style="color:var(--muted); font-family:var(--font-mono); font-size:13px;">${t('doneSub')}</div>
+      <button class="restartBtn" id="restartBtn">${t('restart')}</button>
+    </div>
+  `;
+  document.getElementById('restartBtn').addEventListener('click', () => {
+    current = 0; score = 0; results.fill(null);
+    renderProgress(); renderQuestion();
+  });
+  setWaveState(score >= QUESTIONS.length*0.7 ? 'converged' : 'idle');
+}
+
+// ---------------- pulse waveform canvas ----------------
+const canvas = document.getElementById('wave');
+const ctx = canvas.getContext('2d');
+let waveState = 'idle'; // idle | converged | drift
+let noiseLevel = 0.35;
+let targetNoise = 0.35;
+let t0 = performance.now();
+
+function setWaveState(state) {
+  waveState = state;
+  targetNoise = state === 'converged' ? 0.02 : state === 'drift' ? 0.9 : 0.35;
+  document.getElementById('waveState').textContent = t(
+    state === 'converged' ? 'waveConverged' : state === 'drift' ? 'waveDrift' : 'waveIdle'
+  );
+}
+
+function resizeCanvas() {
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * devicePixelRatio;
+  canvas.height = rect.height * devicePixelRatio;
+}
+window.addEventListener('resize', resizeCanvas);
+
+function drawWave() {
+  if (!ctx) return;
+  resizeCanvas();
+  const w = canvas.width, h = canvas.height;
+  ctx.clearRect(0, 0, w, h);
+
+  noiseLevel += (targetNoise - noiseLevel) * 0.04;
+
+  const time = (performance.now() - t0) / 1000;
+  const midY = h / 2;
+  const amp = h * 0.28;
+
+  ctx.beginPath();
+  const points = 140;
+  for (let i = 0; i <= points; i++) {
+    const x = (i / points) * w;
+    const phase = (i / points) * Math.PI * 6 - time * 2.4;
+    const noise = (Math.sin(phase * 3.7 + time * 9) * 0.5 + Math.sin(phase*7.1 - time*5)*0.5) * noiseLevel;
+    const y = midY + Math.sin(phase) * amp * (1 - noiseLevel*0.3) + noise * amp * 0.6;
+    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  const color = waveState === 'converged' ? '#34D399' : waveState === 'drift' ? '#FB7185' : '#4FD1C5';
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 2 * devicePixelRatio;
+  ctx.shadowColor = color;
+  ctx.shadowBlur = 8;
+  ctx.stroke();
+
+  requestAnimationFrame(drawWave);
+}
+
+document.getElementById('btnEs').addEventListener('click', () => setLang('es'));
+document.getElementById('btnEn').addEventListener('click', () => setLang('en'));
+
+setLang('es');
+drawWave();
+</script>
+</body>
+</html>

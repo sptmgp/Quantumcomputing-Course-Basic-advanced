@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GRAPE on a Qubit — see the pulse find the gate</title>
+<style>
+  :root{
+    --bg:#18271E; --card:#233524; --card2:#1E2F22; --gold:#E8C468;
+    --white:#F3F1E7; --muted:#AEBCA9; --code-bg:#10190F;
+    --blue:#7FB0C9; --serif: Georgia, 'Times New Roman', serif; --mono:'Courier New', monospace;
+  }
+  *{box-sizing:border-box;}
+  body{ margin:0; background:var(--bg); color:var(--white); font-family:var(--serif); padding:3vh 4vw 6vh; }
+  h1{ font-size:1.7rem; margin:0 0 0.2rem 0; }
+  .subtitle{ color:var(--muted); font-size:1rem; margin:0 0 2rem 0; font-style:italic; }
+  h2{ font-size:1.05rem; color:var(--gold); text-transform:uppercase; letter-spacing:1px; margin:0 0 0.9rem 0; }
+
+  /* --- Equation map --- */
+  .eq-panel{ background:var(--card); border-radius:14px; padding:1.6rem 1.8rem; margin-bottom:2rem; }
+  .eq-line{ font-family:var(--mono); font-size:1.25rem; color:var(--white); margin-bottom:1.2rem; letter-spacing:0.5px; }
+  .eq-line .tag{ padding:2px 4px; border-radius:4px; cursor:default; }
+  .legend{ display:grid; grid-template-columns:repeat(3,1fr); gap:0.9rem; }
+  .legend .item{ background:var(--card2); border-radius:10px; padding:0.75rem 0.9rem; }
+  .legend .sym{ font-family:var(--mono); color:var(--gold); font-weight:bold; font-size:0.95rem; }
+  .legend .desc{ font-size:0.82rem; color:var(--muted); margin-top:0.25rem; line-height:1.35; }
+  .tag-d{ background:rgba(127,176,201,0.18); color:var(--blue); }
+  .tag-Hd{ background:rgba(232,196,104,0.18); color:var(--gold); }
+  .tag-Hc{ background:rgba(232,196,104,0.30); color:var(--gold); }
+  .tag-uk{ background:rgba(243,241,231,0.15); color:var(--white); }
+  .tag-U{ background:rgba(127,176,201,0.30); color:var(--blue); }
+  .tag-Ut{ background:rgba(127,176,201,0.30); color:var(--blue); }
+
+  /* --- layout --- */
+  .grid{ display:grid; grid-template-columns:1.1fr 1fr; gap:1.6rem; }
+  @media (max-width:980px){ .grid{ grid-template-columns:1fr; } }
+  .panel{ background:var(--card); border-radius:14px; padding:1.4rem 1.6rem; }
+
+  .controls{ display:flex; flex-wrap:wrap; gap:1.1rem; margin-bottom:1.2rem; }
+  .ctrl{ display:flex; flex-direction:column; gap:0.35rem; min-width:150px; }
+  .ctrl label{ font-size:0.75rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; }
+  select, input[type=range]{ accent-color:var(--gold); }
+  select{
+    background:var(--code-bg); color:var(--white); border:1px solid #36503F; border-radius:6px;
+    padding:0.4rem 0.5rem; font-family:var(--serif); font-size:0.9rem;
+  }
+  .valtag{ color:var(--gold); font-family:var(--mono); font-size:0.85rem; }
+
+  button{
+    background:var(--gold); color:var(--bg); border:none; border-radius:999px;
+    padding:0.65rem 1.4rem; font-weight:bold; font-family:var(--serif); font-size:0.95rem;
+    cursor:pointer;
+  }
+  button.secondary{ background:var(--card2); color:var(--gold); border:1px solid var(--gold); }
+  .btnrow{ display:flex; gap:0.7rem; align-items:center; flex-wrap:wrap; }
+
+  svg text{ font-family:var(--serif); }
+
+  .stat-row{ display:flex; gap:1.4rem; margin-top:1rem; }
+  .stat{ background:var(--code-bg); border-radius:10px; padding:0.7rem 1rem; flex:1; text-align:center; }
+  .stat .num{ font-family:var(--mono); color:var(--gold); font-size:1.4rem; font-weight:bold; }
+  .stat .lab{ font-size:0.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.5px; margin-top:0.2rem; }
+
+  .scrub-row{ display:flex; align-items:center; gap:0.8rem; margin-top:1rem; }
+  .scrub-row input[type=range]{ flex:1; }
+  .note{ font-size:0.78rem; color:var(--muted); margin-top:0.8rem; line-height:1.4; }
+
+  .lang-block{ display:none; }
+  .lang-block.visible{ display:revert; }
+
+  #lang-toggle{
+    position:fixed; top:2.2vh; right:4vw; z-index:50;
+    display:flex; background:var(--card2); border-radius:999px; padding:4px; gap:4px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.4);
+  }
+  #lang-toggle button{
+    border:none; background:transparent; color:var(--muted); border-radius:999px;
+    font-family:var(--serif); font-size:0.8rem; font-weight:bold; padding:0.4rem 1rem; cursor:pointer;
+  }
+  #lang-toggle button.active{ background:var(--gold); color:var(--bg); }
+</style>
+</head>
+<body>
+
+<div id="lang-toggle">
+  <button id="btn-es" onclick="setLang('es')">ESPAÑOL</button>
+  <button id="btn-en" onclick="setLang('en')">ENGLISH</button>
+</div>
+
+<div class="lang-block lang-es">
+  <h1>GRAPE encontrando una puerta de un solo qubit</h1>
+  <p class="subtitle">Observa cómo se moldean las amplitudes del pulso u_k hasta que la trayectoria del qubit coincide con la puerta objetivo.</p>
+</div>
+<div class="lang-block lang-en">
+  <h1>GRAPE finding a single-qubit gate</h1>
+  <p class="subtitle">Watch the pulse amplitudes u_k get shaped until the qubit's trajectory lands on the target gate.</p>
+</div>
+
+<div class="eq-panel">
+  <div class="lang-block lang-es"><h2>La ecuación, mapeada a esta demo</h2></div>
+  <div class="lang-block lang-en"><h2>The equation, mapped onto this demo</h2></div>
+  <div class="eq-line">
+    U = Π<sub>k=N..1</sub> exp[ −i(<span class="tag tag-Hd">H_d</span> + <span class="tag tag-uk">u_k</span>·<span class="tag tag-Hc">H_c</span>)·Δt ]
+    &nbsp;&nbsp;&nbsp; F = |Tr(<span class="tag tag-Ut">U_target</span>† <span class="tag tag-U">U</span>)|² / <span class="tag tag-d">d</span>²
+  </div>
+  <div class="legend">
+    <div class="item">
+      <div class="sym tag-d" style="display:inline-block;">d = 2</div>
+      <div class="desc lang-block lang-es">Un qubit → matrices 2×2. Aquí es donde entra el "qubit" en la ecuación.</div>
+      <div class="desc lang-block lang-en">One qubit → 2×2 matrices. This is where "qubit" enters the equation.</div>
+    </div>
+    <div class="item">
+      <div class="sym tag-Hd" style="display:inline-block;">H_d</div>
+      <div class="desc lang-block lang-es">Término de deriva — el error de desafinación propio del qubit, siempre activo (control abajo).</div>
+      <div class="desc lang-block lang-en">Drift term — the qubit's own detuning error, always on (slider below).</div>
+    </div>
+    <div class="item">
+      <div class="sym tag-Hc" style="display:inline-block;">H_c</div>
+      <div class="desc lang-block lang-es">Cómo se acopla el control — aquí, σₓ y σᵥ (dos cuadraturas de microondas).</div>
+      <div class="desc lang-block lang-en">How the drive couples in — here, σₓ and σᵥ (two microwave quadratures).</div>
+    </div>
+    <div class="item">
+      <div class="sym tag-uk" style="display:inline-block;">u_k</div>
+      <div class="desc lang-block lang-es">La altura del pulso en el instante k — esto es lo que GRAPE realmente resuelve.</div>
+      <div class="desc lang-block lang-en">The pulse height at slice k — this is what GRAPE actually solves for.</div>
+    </div>
+    <div class="item">
+      <div class="sym tag-U" style="display:inline-block;">U</div>
+      <div class="desc lang-block lang-es">La puerta que tu pulso realmente implementa — trazada en la esfera de Bloch abajo.</div>
+      <div class="desc lang-block lang-en">The gate your pulse actually implements — traced on the Bloch sphere below.</div>
+    </div>
+    <div class="item">
+      <div class="sym tag-Ut" style="display:inline-block;">U_target</div>
+      <div class="desc lang-block lang-es">La puerta que pediste (elige una abajo) — la estrella dorada sobre la esfera.</div>
+      <div class="desc lang-block lang-en">The gate you asked for (pick one below) — the gold star on the sphere.</div>
+    </div>
+  </div>
+</div>
+
+<div class="controls">
+  <div class="ctrl">
+    <label class="lang-block lang-es">Puerta objetivo U_target</label>
+    <label class="lang-block lang-en">Target gate U_target</label>
+    <select id="gateSelect">
+      <option value="X" data-es="X (inversión de bit)" data-en="X (bit flip)">X (bit flip)</option>
+      <option value="Y" data-es="Y" data-en="Y">Y</option>
+      <option value="H" data-es="H (Hadamard)" data-en="H (Hadamard)">H (Hadamard)</option>
+      <option value="Z" data-es="Z (inversión de fase)" data-en="Z (phase flip)">Z (phase flip)</option>
+    </select>
+  </div>
+  <div class="ctrl">
+    <label><span class="lang-block lang-es">Segmentos N: </span><span class="lang-block lang-en">Segments N: </span><span class="valtag" id="nVal">16</span></label>
+    <input type="range" id="nSlider" min="8" max="28" value="16" step="1">
+  </div>
+  <div class="ctrl">
+    <label><span class="lang-block lang-es">Deriva H_d (error de desafinación): </span><span class="lang-block lang-en">Drift H_d (detuning error): </span><span class="valtag" id="driftVal">0.50</span></label>
+    <input type="range" id="driftSlider" min="-2" max="2" value="0.5" step="0.1">
+  </div>
+  <div class="ctrl" style="justify-content:flex-end;">
+    <div class="btnrow">
+      <button id="runBtn"><span class="lang-block lang-es">Ejecutar GRAPE</span><span class="lang-block lang-en">Run GRAPE</span></button>
+      <button class="secondary" id="playBtn" disabled>▶ <span class="lang-block lang-es">Repetir optimización</span><span class="lang-block lang-en">Replay optimization</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="grid">
+  <div class="panel">
+    <div class="lang-block lang-es"><h2>Esfera de Bloch — a dónde va realmente |0⟩</h2></div>
+    <div class="lang-block lang-en"><h2>Bloch sphere — where |0⟩ actually goes</h2></div>
+    <svg id="bloch" viewBox="0 0 420 420" width="100%" height="380"></svg>
+    <div class="note lang-block lang-es">Trazo azul: trayectoria del qubit bajo el pulso actual. Estrella dorada: a dónde envía U_target al estado |0⟩. Cuando el extremo azul coincide con la estrella, F ≈ 1.</div>
+    <div class="note lang-block lang-en">Blue path: the qubit's trajectory under the current pulse. Gold star: where U_target sends |0⟩. When the blue endpoint sits on the star, F ≈ 1.</div>
+  </div>
+
+  <div class="panel">
+    <div class="lang-block lang-es"><h2>Pulsos de control u_x(t), u_y(t)</h2></div>
+    <div class="lang-block lang-en"><h2>Control pulses u_x(t), u_y(t)</h2></div>
+    <svg id="pulses" viewBox="0 0 420 170" width="100%" height="170"></svg>
+    <div class="lang-block lang-es"><h2 style="margin-top:1.4rem;">Fidelidad vs. iteración de GRAPE</h2></div>
+    <div class="lang-block lang-en"><h2 style="margin-top:1.4rem;">Fidelity vs. GRAPE iteration</h2></div>
+    <svg id="fidchart" viewBox="0 0 420 140" width="100%" height="140"></svg>
+    <div class="stat-row">
+      <div class="stat"><div class="num" id="fidStat">—</div><div class="lab"><span class="lang-block lang-es">Fidelidad F</span><span class="lang-block lang-en">Fidelity F</span></div></div>
+      <div class="stat"><div class="num" id="iterStat">—</div><div class="lab"><span class="lang-block lang-es">Iteración</span><span class="lang-block lang-en">Iteration</span></div></div>
+    </div>
+    <div class="scrub-row">
+      <span style="font-size:0.8rem;color:var(--muted);"><span class="lang-block lang-es">iter 0</span><span class="lang-block lang-en">iter 0</span></span>
+      <input type="range" id="scrubSlider" min="0" max="0" value="0" disabled>
+      <span style="font-size:0.8rem;color:var(--muted);" id="scrubMaxLabel">0</span>
+    </div>
+    <div class="note lang-block lang-es">Arrastra el control (o presiona Repetir) para recorrer la optimización y ver cómo el pulso — y la trayectoria en la esfera de Bloch — se reforman iteración por iteración.</div>
+    <div class="note lang-block lang-en">Drag the slider (or hit Replay) to scrub through the optimization and watch the pulse — and the Bloch trajectory — reshape iteration by iteration.</div>
+  </div>
+</div>
+
+<script>
+/* ---------- complex + 2x2 matrix helpers ---------- */
+const C=(re,im=0)=>({re,im});
+const cadd=(a,b)=>C(a.re+b.re,a.im+b.im);
+const cmul=(a,b)=>C(a.re*b.re-a.im*b.im, a.re*b.im+a.im*b.re);
+const cconj=a=>C(a.re,-a.im);
+
+function matMul(A,B){
+  // A,B are [a11,a12,a21,a22]
+  return [
+    cadd(cmul(A[0],B[0]),cmul(A[1],B[2])),
+    cadd(cmul(A[0],B[1]),cmul(A[1],B[3])),
+    cadd(cmul(A[2],B[0]),cmul(A[3],B[2])),
+    cadd(cmul(A[2],B[1]),cmul(A[3],B[3])),
+  ];
+}
+const IDEN=[C(1),C(0),C(0),C(1)];
+
+function segmentU(wx,wy,wz,dt){
+  const r=Math.sqrt(wx*wx+wy*wy+wz*wz);
+  if(r<1e-12) return IDEN;
+  const ang=r*dt/2, c=Math.cos(ang), s=Math.sin(ang);
+  const nx=wx/r, ny=wy/r, nz=wz/r;
+  return [
+    C(c,-s*nz), C(-s*ny,-s*nx),
+    C(s*ny,-s*nx), C(c,s*nz)
+  ];
+}
+
+function fidelity(U,Ut){
+  // Tr(Ut^dagger U) = sum elementwise conj(Ut_ij)*U_ij
+  let tr=C(0,0);
+  for(let i=0;i<4;i++) tr=cadd(tr,cmul(cconj(Ut[i]),U[i]));
+  const mag2=tr.re*tr.re+tr.im*tr.im;
+  return mag2/4;
+}
+
+function blochVec(psi){
+  // psi = [c0,c1] complex amplitudes
+  const [c0,c1]=psi;
+  const x=2*(c0.re*c1.re+c0.im*c1.im);
+  const y=2*(c0.re*c1.im-c0.im*c1.re);
+  const z=c0.re*c0.re+c0.im*c0.im-(c1.re*c1.re+c1.im*c1.im);
+  return [x,y,z];
+}
+function applyU(U,psi){
+  const [c0,c1]=psi;
+  return [ cadd(cmul(U[0],c0),cmul(U[1],c1)), cadd(cmul(U[2],c0),cmul(U[3],c1)) ];
+}
+
+/* target gates */
+const SQ=1/Math.sqrt(2);
+const GATES={
+  X:[C(0),C(1),C(1),C(0)],
+  Y:[C(0),C(0,-1),C(0,1),C(0)],
+  Z:[C(1),C(0),C(0),C(-1)],
+  H:[C(SQ),C(SQ),C(SQ),C(-SQ)],
+};
+
+/* ---------- GRAPE optimizer ---------- */
+function singleGRAPEAttempt(N, driftZ, Utarget, iterations, lr, umax){
+  const dt=1.0/N;
+  let ux=new Array(N).fill(0).map(()=> (Math.random()-0.5)*0.6);
+  let uy=new Array(N).fill(0).map(()=> (Math.random()-0.5)*0.6);
+  const history=[];
+  const eps=1e-3;
+
+  function buildUs(ux,uy){
+    const Us=[null];
+    for(let k=0;k<N;k++) Us.push(segmentU(ux[k],uy[k],driftZ,dt));
+    return Us; // 1-indexed
+  }
+
+  for(let it=0; it<iterations; it++){
+    const Us=buildUs(ux,uy);
+    // forward F[0..N], backward B[0..N]
+    const F=[IDEN];
+    for(let k=1;k<=N;k++) F.push(matMul(Us[k],F[k-1]));
+    const B=new Array(N+1); B[N]=IDEN;
+    for(let k=N;k>=1;k--) B[k-1]=matMul(B[k],Us[k]);
+    const total=F[N];
+    const F0=fidelity(total,Utarget);
+    history.push({ux:ux.slice(),uy:uy.slice(),fid:F0});
+
+    const gradX=new Array(N), gradY=new Array(N);
+    for(let k=1;k<=N;k++){
+      const UkX=segmentU(ux[k-1]+eps,uy[k-1],driftZ,dt);
+      const totX=matMul(B[k],matMul(UkX,F[k-1]));
+      gradX[k-1]=(fidelity(totX,Utarget)-F0)/eps;
+
+      const UkY=segmentU(ux[k-1],uy[k-1]+eps,driftZ,dt);
+      const totY=matMul(B[k],matMul(UkY,F[k-1]));
+      gradY[k-1]=(fidelity(totY,Utarget)-F0)/eps;
+    }
+    for(let k=0;k<N;k++){
+      ux[k]=Math.max(-umax,Math.min(umax, ux[k]+lr*gradX[k]));
+      uy[k]=Math.max(-umax,Math.min(umax, uy[k]+lr*gradY[k]));
+    }
+  }
+  // final snapshot
+  const Us=buildUs(ux,uy);
+  let tot=IDEN; for(let k=1;k<=N;k++) tot=matMul(Us[k],tot);
+  history.push({ux:ux.slice(),uy:uy.slice(),fid:fidelity(tot,Utarget)});
+  return history;
+}
+
+function runGRAPE(N, driftZ, Utarget, iterations=250, lr=4.5, umax=6, restarts=8){
+  // Some targets (pure z-axis rotations) need a commutator-like pulse sequence and
+  // can land in a local trap from a single random start, so we keep the best of
+  // several independent attempts -- same idea real GRAPE implementations use.
+  let best=null;
+  for(let r=0;r<restarts;r++){
+    const h=singleGRAPEAttempt(N, driftZ, Utarget, iterations, lr, umax);
+    if(!best || h[h.length-1].fid > best[best.length-1].fid) best=h;
+  }
+  return best;
+}
+
+/* ---------- trajectory for a given snapshot ---------- */
+function trajectory(ux,uy,driftZ){
+  const N=ux.length, dt=1.0/N;
+  let psi=[C(1),C(0)];
+  const pts=[blochVec(psi)];
+  for(let k=0;k<N;k++){
+    const U=segmentU(ux[k],uy[k],driftZ,dt);
+    psi=applyU(U,psi);
+    pts.push(blochVec(psi));
+  }
+  return pts;
+}
+
+/* ---------- 3D-ish projection ---------- */
+const AZ=-35*Math.PI/180, EL=20*Math.PI/180;
+function project(x,y,z){
+  const x1=x*Math.cos(AZ)-y*Math.sin(AZ);
+  const y1=x*Math.sin(AZ)+y*Math.cos(AZ);
+  const z1=z;
+  const y2=y1*Math.cos(EL)-z1*Math.sin(EL);
+  const z2=y1*Math.sin(EL)+z1*Math.cos(EL);
+  return {sx:x1, sy:-z2};
+}
+
+/* ---------- drawing ---------- */
+const blochSvg=document.getElementById('bloch');
+const CX=210, CY=210, R=150;
+function ellipsePath(points){
+  return points.map((p,i)=>`${i===0?'M':'L'} ${(CX+R*p.sx).toFixed(1)} ${(CY+R*p.sy).toFixed(1)}`).join(' ')+' Z';
+}
+function circlePts(planeFn, n=64){
+  const pts=[];
+  for(let i=0;i<=n;i++){
+    const t=2*Math.PI*i/n;
+    pts.push(project(...planeFn(t)));
+  }
+  return pts;
+}
+function drawBlochStatic(){
+  let svg=`<circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="#36503F" stroke-width="1.5"/>`;
+  const eq=circlePts(t=>[Math.cos(t),Math.sin(t),0]);
+  svg+=`<path d="${ellipsePath(eq)}" fill="none" stroke="#36503F" stroke-width="1" stroke-dasharray="3,3"/>`;
+  const mer=circlePts(t=>[0,Math.sin(t),Math.cos(t)]);
+  svg+=`<path d="${ellipsePath(mer)}" fill="none" stroke="#2c4030" stroke-width="1" stroke-dasharray="3,3"/>`;
+  const n=project(0,0,1), s=project(0,0,-1);
+  svg+=`<text x="${CX+R*n.sx}" y="${CY+R*n.sy-10}" fill="#AEBCA9" font-size="13" text-anchor="middle">|0⟩</text>`;
+  svg+=`<text x="${CX+R*s.sx}" y="${CY+R*s.sy+18}" fill="#AEBCA9" font-size="13" text-anchor="middle">|1⟩</text>`;
+  return svg;
+}
+function drawBloch(points, targetVec){
+  let svg=drawBlochStatic();
+  const proj=points.map(p=>project(p[0],p[1],p[2]));
+  const path=proj.map((p,i)=>`${i===0?'M':'L'} ${(CX+R*p.sx).toFixed(1)} ${(CY+R*p.sy).toFixed(1)}`).join(' ');
+  svg+=`<path d="${path}" fill="none" stroke="#7FB0C9" stroke-width="2.5"/>`;
+  const startP=proj[0];
+  svg+=`<circle cx="${CX+R*startP.sx}" cy="${CY+R*startP.sy}" r="5" fill="#AEBCA9"/>`;
+  const endP=proj[proj.length-1];
+  svg+=`<circle cx="${CX+R*endP.sx}" cy="${CY+R*endP.sy}" r="6.5" fill="#7FB0C9" stroke="#F3F1E7" stroke-width="1.5"/>`;
+  const tp=project(...targetVec);
+  const sx=CX+R*tp.sx, sy=CY+R*tp.sy;
+  svg+=starSvg(sx,sy,10);
+  blochSvg.innerHTML=svg;
+}
+function starSvg(cx,cy,r){
+  const pts=[];
+  for(let i=0;i<10;i++){
+    const ang=Math.PI/2 + i*Math.PI/5;
+    const rad=(i%2===0)?r:r*0.42;
+    pts.push(`${(cx+rad*Math.cos(ang)).toFixed(1)},${(cy-rad*Math.sin(ang)).toFixed(1)}`);
+  }
+  return `<polygon points="${pts.join(' ')}" fill="#E8C468" stroke="#18271E" stroke-width="1"/>`;
+}
+
+/* pulses chart */
+const pulsesSvg=document.getElementById('pulses');
+function drawPulses(ux,uy){
+  const W=420,H=170, pad=28, umax=6;
+  const N=ux.length;
+  const xAt=i=> pad + (W-2*pad)*i/(N-1||1);
+  const yAt=v=> H/2 - (v/umax)*(H/2-14);
+  let svg=`<line x1="${pad}" y1="${H/2}" x2="${W-pad}" y2="${H/2}" stroke="#36503F" stroke-width="1"/>`;
+  function linePath(arr,color){
+    const pts=arr.map((v,i)=>`${xAt(i).toFixed(1)},${yAt(v).toFixed(1)}`);
+    return `<polyline points="${pts.join(' ')}" fill="none" stroke="${color}" stroke-width="2.2"/>`;
+  }
+  svg+=linePath(ux,'#E8C468');
+  svg+=linePath(uy,'#7FB0C9');
+  svg+=`<text x="${pad}" y="14" fill="#E8C468" font-size="11">u_x</text>`;
+  svg+=`<text x="${pad+40}" y="14" fill="#7FB0C9" font-size="11">u_y</text>`;
+  svg+=`<text x="${W-pad}" y="${H-6}" fill="#AEBCA9" font-size="10" text-anchor="end">segment k →</text>`;
+  pulsesSvg.innerHTML=svg;
+}
+
+/* fidelity chart */
+const fidSvg=document.getElementById('fidchart');
+function drawFidChart(history, markIdx){
+  const W=420,H=140, pad=26;
+  const N=history.length;
+  const xAt=i=> pad + (W-2*pad)*i/((N-1)||1);
+  const yAt=f=> H-pad - f*(H-2*pad);
+  let svg='';
+  for(const gy of [0,0.25,0.5,0.75,1]){
+    const y=yAt(gy);
+    svg+=`<line x1="${pad}" y1="${y.toFixed(1)}" x2="${W-pad}" y2="${y.toFixed(1)}" stroke="#2c4030" stroke-width="1"/>`;
+  }
+  const pts=history.map((h,i)=>`${xAt(i).toFixed(1)},${yAt(h.fid).toFixed(1)}`);
+  svg+=`<polyline points="${pts.join(' ')}" fill="none" stroke="#E8C468" stroke-width="2.2"/>`;
+  if(markIdx!=null){
+    const mx=xAt(markIdx), my=yAt(history[markIdx].fid);
+    svg+=`<line x1="${mx.toFixed(1)}" y1="${pad}" x2="${mx.toFixed(1)}" y2="${H-pad}" stroke="#AEBCA9" stroke-width="1" stroke-dasharray="2,2"/>`;
+    svg+=`<circle cx="${mx.toFixed(1)}" cy="${my.toFixed(1)}" r="4.5" fill="#7FB0C9"/>`;
+  }
+  svg+=`<text x="${pad}" y="12" fill="#AEBCA9" font-size="10">F=1</text>`;
+  svg+=`<text x="${pad}" y="${H-pad+12}" fill="#AEBCA9" font-size="10">F=0</text>`;
+  fidSvg.innerHTML=svg;
+}
+
+/* total unitary from a pulse (for live fidelity re-check against a newly chosen gate) */
+function totalUnitary(ux,uy,driftZ){
+  const N=ux.length, dt=1.0/N;
+  let tot=IDEN;
+  for(let k=0;k<N;k++) tot=matMul(segmentU(ux[k],uy[k],driftZ,dt), tot);
+  return tot;
+}
+
+/* ---------- app state / wiring ---------- */
+let currentHistory=null;
+let playTimer=null;
+
+function render(idx){
+  const snap=currentHistory[idx];
+  const driftZ=parseFloat(document.getElementById('driftSlider').value);
+  const pts=trajectory(snap.ux,snap.uy,driftZ);
+  const gate=GATES[document.getElementById('gateSelect').value];
+  const targetVec=blochVec(applyU(gate,[C(1),C(0)]));
+  drawBloch(pts, targetVec);
+  drawPulses(snap.ux,snap.uy);
+  drawFidChart(currentHistory, idx);
+  const liveFid=fidelity(totalUnitary(snap.ux,snap.uy,driftZ), gate);
+  document.getElementById('fidStat').textContent=liveFid.toFixed(4);
+  document.getElementById('iterStat').textContent=idx;
+}
+
+function initEmpty(){
+  drawBloch([blochVec([C(1),C(0)])], blochVec(applyU(GATES[document.getElementById('gateSelect').value],[C(1),C(0)])));
+  drawPulses(new Array(parseInt(document.getElementById('nSlider').value)).fill(0), new Array(parseInt(document.getElementById('nSlider').value)).fill(0));
+  drawFidChart([{fid:0}], 0);
+}
+
+document.getElementById('nSlider').addEventListener('input', e=>{
+  document.getElementById('nVal').textContent=e.target.value;
+});
+document.getElementById('driftSlider').addEventListener('input', e=>{
+  document.getElementById('driftVal').textContent=parseFloat(e.target.value).toFixed(2);
+});
+
+document.getElementById('runBtn').addEventListener('click', ()=>{
+  clearInterval(playTimer);
+  const N=parseInt(document.getElementById('nSlider').value);
+  const driftZ=parseFloat(document.getElementById('driftSlider').value);
+  const gate=GATES[document.getElementById('gateSelect').value];
+  currentHistory=runGRAPE(N, driftZ, gate, 250, 4.5, 6, 8);
+  const scrub=document.getElementById('scrubSlider');
+  scrub.max=currentHistory.length-1;
+  scrub.value=currentHistory.length-1;
+  scrub.disabled=false;
+  document.getElementById('scrubMaxLabel').textContent=currentHistory.length-1;
+  document.getElementById('playBtn').disabled=false;
+  render(currentHistory.length-1);
+});
+
+document.getElementById('scrubSlider').addEventListener('input', e=>{
+  if(!currentHistory) return;
+  render(parseInt(e.target.value));
+});
+
+document.getElementById('playBtn').addEventListener('click', ()=>{
+  if(!currentHistory) return;
+  clearInterval(playTimer);
+  const scrub=document.getElementById('scrubSlider');
+  let i=0;
+  scrub.value=0; render(0);
+  playTimer=setInterval(()=>{
+    i+=2;
+    if(i>=currentHistory.length){ clearInterval(playTimer); i=currentHistory.length-1; }
+    scrub.value=i;
+    render(i);
+  }, 40);
+});
+
+document.getElementById('gateSelect').addEventListener('change', ()=>{
+  if(currentHistory){ render(parseInt(document.getElementById('scrubSlider').value)); }
+  else initEmpty();
+});
+
+function setLang(l){
+  document.getElementById('btn-es').classList.toggle('active', l==='es');
+  document.getElementById('btn-en').classList.toggle('active', l==='en');
+  document.querySelectorAll('.lang-es').forEach(el => el.classList.toggle('visible', l==='es'));
+  document.querySelectorAll('.lang-en').forEach(el => el.classList.toggle('visible', l==='en'));
+  const gateSelect=document.getElementById('gateSelect');
+  Array.from(gateSelect.options).forEach(opt=>{
+    opt.textContent = l==='es' ? opt.dataset.es : opt.dataset.en;
+  });
+  document.documentElement.lang = l;
+}
+setLang('es');
+
+initEmpty();
+</script>
+
+</body>
+</html>

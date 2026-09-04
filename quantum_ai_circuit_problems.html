@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>10 Problemas de Circuitos: IA + Cuántica</title>
+<style>
+  :root {
+    --bg: #0B0E1A;
+    --panel: #141829;
+    --panel-line: #262C46;
+    --text: #E4E7F5;
+    --muted: #7B82A3;
+    --cyan: #4FD1C5;
+    --magenta: #F471B5;
+    --amber: #FBBF24;
+    --font-display: 'Space Grotesk', 'Avenir Next', 'Century Gothic', sans-serif;
+    --font-body: 'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif;
+    --font-mono: 'IBM Plex Mono', 'SF Mono', Consolas, monospace;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--font-body); }
+  .wrap { max-width: 800px; margin: 0 auto; padding: 32px 20px 100px; }
+
+  .topbar { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; margin-bottom: 6px; }
+  .eyebrow { font-family: var(--font-mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--cyan); margin-bottom: 8px; }
+  h1 { font-family: var(--font-display); font-size: 25px; font-weight: 600; margin: 0 0 6px; letter-spacing: -0.01em; line-height: 1.3; }
+  .subtitle { color: var(--muted); font-size: 14px; line-height: 1.6; max-width: 560px; }
+
+  .langToggle { display: flex; background: var(--panel); border: 1px solid var(--panel-line); border-radius: 999px; padding: 3px; flex-shrink: 0; }
+  .langToggle button { font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.04em; padding: 6px 14px; border-radius: 999px; border: none; background: transparent; color: var(--muted); cursor: pointer; transition: all 0.2s ease; }
+  .langToggle button.active { background: var(--cyan); color: #06201C; }
+
+  .problem {
+    background: var(--panel); border: 1px solid var(--panel-line); border-radius: 12px;
+    margin: 22px 0; overflow: hidden;
+  }
+  .pHeader { padding: 18px 22px; display: flex; align-items: center; gap: 14px; }
+  .pNum { font-family: var(--font-display); font-size: 22px; color: var(--panel-line); font-weight: 700; width: 34px; flex-shrink: 0; }
+  .pTitleBlock { flex: 1; min-width: 0; }
+  .pTitle { font-size: 16.5px; font-weight: 600; margin: 0 0 4px; }
+  .pTag { display: inline-block; font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--magenta); background: rgba(244,113,181,0.1); border: 1px solid rgba(244,113,181,0.3); padding: 2px 8px; border-radius: 5px; }
+
+  .circuitBox { padding: 6px 22px 18px; }
+  svg .wire { stroke: var(--panel-line); stroke-width: 2; }
+  svg .qlabel { fill: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+  svg .gateBox { fill: rgba(79,209,197,0.12); stroke: var(--cyan); stroke-width: 1.5; }
+  svg .gateLabel { fill: var(--cyan); font-family: var(--font-mono); font-size: 13px; font-weight: 600; }
+  svg .cnotLine { stroke: var(--cyan); stroke-width: 2; }
+  svg .controlDot { fill: var(--cyan); }
+  svg .targetCircle { fill: none; stroke: var(--cyan); stroke-width: 2; }
+  svg .targetPlus { fill: var(--cyan); font-size: 15px; font-family: var(--font-mono); }
+  svg .meterBox { fill: rgba(244,113,181,0.1); stroke: var(--magenta); stroke-width: 1.5; }
+  svg .meterArc { fill: none; stroke: var(--magenta); stroke-width: 2; }
+
+  .industryLine { padding: 0 22px 16px; font-size: 13px; color: var(--muted); font-style: italic; border-bottom: 1px solid var(--panel-line); }
+
+  .toggleRow { display: flex; gap: 8px; padding: 14px 22px; flex-wrap: wrap; }
+  .revealBtn {
+    font-family: var(--font-mono); font-size: 12px; font-weight: 600; letter-spacing: 0.02em;
+    padding: 8px 14px; border-radius: 7px; border: 1px solid var(--panel-line); background: transparent;
+    color: var(--text); cursor: pointer; transition: all 0.15s ease;
+  }
+  .revealBtn:hover { border-color: var(--cyan); }
+  .revealBtn.advToggle.active { background: var(--cyan); color: #06201C; border-color: var(--cyan); }
+  .revealBtn.simpleToggle.active { background: var(--amber); color: #2B1D00; border-color: var(--amber); }
+
+  .panelContent { display: none; padding: 4px 22px 20px; font-size: 14.5px; line-height: 1.7; }
+  .panelContent.show { display: block; }
+  .panelContent.advanced { border-top: 1px solid var(--panel-line); background: rgba(79,209,197,0.03); }
+  .panelContent.simple { border-top: 1px solid var(--panel-line); background: rgba(251,191,36,0.04); }
+  .panelLabel { font-family: var(--font-mono); font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 8px; display: block; }
+  .advanced .panelLabel { color: var(--cyan); }
+  .simple .panelLabel { color: var(--amber); }
+  .qText { font-weight: 600; margin-bottom: 10px; }
+  code { font-family: var(--font-mono); background: rgba(255,255,255,0.06); padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: var(--cyan); }
+
+  @media (max-width: 520px) {
+    h1 { font-size: 20px; }
+    .pHeader { padding: 16px; }
+    .circuitBox, .industryLine, .toggleRow, .panelContent { padding-left: 16px; padding-right: 16px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <div class="eyebrow" data-i18n="eyebrow"></div>
+      <h1 data-i18n="title"></h1>
+      <div class="subtitle" data-i18n="subtitle"></div>
+    </div>
+    <div class="langToggle">
+      <button id="btnEs">ES</button>
+      <button id="btnEn">EN</button>
+    </div>
+  </div>
+  <div id="problems"></div>
+</div>
+
+<script>
+function buildCircuitSVG(doc, spec, opts = {}) {
+  const colWidth = opts.colWidth || 70;
+  const rowHeight = opts.rowHeight || 50;
+  const marginL = opts.marginL || 50;
+  const marginT = opts.marginT || 25;
+  const width = marginL + spec.cols * colWidth + 30;
+  const height = marginT * 2 + (spec.numQubits - 1) * rowHeight + 30;
+
+  const svg = doc.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('viewBox', `0 0 ${width} ${height}`);
+  svg.setAttribute('width', '100%');
+
+  function qy(q) { return marginT + q * rowHeight; }
+  function cx(col) { return marginL + col * colWidth + colWidth/2; }
+
+  for (let q = 0; q < spec.numQubits; q++) {
+    const line = doc.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', marginL - 20); line.setAttribute('x2', width - 15);
+    line.setAttribute('y1', qy(q)); line.setAttribute('y2', qy(q));
+    line.setAttribute('class', 'wire');
+    svg.appendChild(line);
+
+    const label = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
+    label.setAttribute('x', marginL - 30); label.setAttribute('y', qy(q) + 4);
+    label.setAttribute('class', 'qlabel'); label.setAttribute('text-anchor', 'end');
+    label.textContent = spec.wireLabels ? spec.wireLabels[q] : `q${q}`;
+    svg.appendChild(label);
+  }
+
+  for (const g of spec.gates) {
+    if (g.type === 'box') {
+      const bx = cx(g.col) - 24, by = qy(g.qubit) - 16;
+      const rect = doc.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', bx); rect.setAttribute('y', by);
+      rect.setAttribute('width', 48); rect.setAttribute('height', 32);
+      rect.setAttribute('rx', 6); rect.setAttribute('class', 'gateBox');
+      svg.appendChild(rect);
+      const text = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('x', cx(g.col)); text.setAttribute('y', qy(g.qubit) + 5);
+      text.setAttribute('text-anchor', 'middle'); text.setAttribute('class', 'gateLabel');
+      text.textContent = g.label;
+      svg.appendChild(text);
+    } else if (g.type === 'cnot') {
+      const x = cx(g.col);
+      const line = doc.createElementNS('http://www.w3.org/2000/svg', 'line');
+      line.setAttribute('x1', x); line.setAttribute('x2', x);
+      line.setAttribute('y1', qy(g.control)); line.setAttribute('y2', qy(g.target));
+      line.setAttribute('class', 'cnotLine');
+      svg.appendChild(line);
+
+      const dot = doc.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      dot.setAttribute('cx', x); dot.setAttribute('cy', qy(g.control));
+      dot.setAttribute('r', 6); dot.setAttribute('class', 'controlDot');
+      svg.appendChild(dot);
+
+      const targ = doc.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      targ.setAttribute('cx', x); targ.setAttribute('cy', qy(g.target));
+      targ.setAttribute('r', 12); targ.setAttribute('class', 'targetCircle');
+      svg.appendChild(targ);
+      const plus = doc.createElementNS('http://www.w3.org/2000/svg', 'text');
+      plus.setAttribute('x', x); plus.setAttribute('y', qy(g.target)+5);
+      plus.setAttribute('text-anchor','middle'); plus.setAttribute('class','targetPlus');
+      plus.textContent = '+';
+      svg.appendChild(plus);
+    } else if (g.type === 'meter') {
+      const x = cx(g.col), y = qy(g.qubit);
+      const rect = doc.createElementNS('http://www.w3.org/2000/svg', 'rect');
+      rect.setAttribute('x', x-20); rect.setAttribute('y', y-16);
+      rect.setAttribute('width', 40); rect.setAttribute('height', 32);
+      rect.setAttribute('rx', 6); rect.setAttribute('class', 'meterBox');
+      svg.appendChild(rect);
+      const arc = doc.createElementNS('http://www.w3.org/2000/svg', 'path');
+      arc.setAttribute('d', `M ${x-10} ${y+6} A 10 10 0 0 1 ${x+10} ${y+6}`);
+      arc.setAttribute('class', 'meterArc');
+      svg.appendChild(arc);
+    }
+  }
+  return svg;
+}
+</script>
+<script>
+const I18N = {
+  es: {
+    eyebrow: "IA + Cuántica · Problemas de Circuitos",
+    title: "10 Problemas de Circuitos Cuánticos en la Industria",
+    subtitle: "Cada problema combina un concepto real de IA+cuántica usado por empresas como Google Quantum AI, IBM, Rigetti o D-Wave, con dos niveles de explicación: uno técnico y uno para alguien de 17 años que nunca ha visto física cuántica.",
+    advBtn: "Nivel técnico (avanzado)",
+    simpleBtn: "Explícamelo simple",
+    advLabel: "Pregunta de nivel avanzado",
+    simpleLabel: "Para alguien de 17 años, sin física",
+  },
+  en: {
+    eyebrow: "AI + Quantum · Circuit Problems",
+    title: "10 Industry Quantum Circuit Problems",
+    subtitle: "Each problem pairs a real AI+quantum concept used by companies like Google Quantum AI, IBM, Rigetti, or D-Wave with two levels of explanation: one technical, one for a 17-year-old who has never seen quantum physics.",
+    advBtn: "Technical level (advanced)",
+    simpleBtn: "Explain it simply",
+    advLabel: "Advanced-level question",
+    simpleLabel: "For a 17-year-old, no physics background",
+  }
+};
+
+const PROBLEMS = [
+  {
+    title: { es: "Calibración de un pulso π (compuerta X) por Rabi", en: "Calibrating a π-pulse (X gate) via Rabi driving" },
+    tag: "Rigetti / Google Quantum AI",
+    circuit: { numQubits: 1, cols: 2, wireLabels: ["q0"], gates: [
+      { col: 0, qubit: 0, label: "RX(θ)", type: "box" },
+      { col: 1, qubit: 0, type: "meter" },
+    ]},
+    adv: {
+      es: "Un qubit se conduce con H = (Ω/2)σx. Comenzando en |0⟩, la población en |1⟩ tras un tiempo t es P₁(t) = sin²(Ωt/2). Un agente RL observa P₁ y ajusta t para lograr una compuerta X perfecta (P₁=1). (a) ¿Qué valor de t logra esto para una Ω dada? (b) ¿Por qué un t* calibrado hoy podría fallar la próxima semana en el mismo qubit?",
+      en: "A qubit is driven with H = (Ω/2)σx. Starting in |0⟩, the population in |1⟩ after time t is P₁(t) = sin²(Ωt/2). An RL agent observes P₁ and adjusts t to achieve a perfect X gate (P₁=1). (a) What value of t achieves this for a given Ω? (b) Why might a t* calibrated today fail next week on the same qubit?"
+    },
+    advAnswer: {
+      es: "(a) P₁=1 requiere Ωt/2 = π/2, así que t* = π/Ω. (b) Ω depende de la potencia de microondas realmente entregada al qubit, que se ve afectada por drift térmico, degradación de cables y fluctuaciones del amplificador — por lo que el Ω real cambia con el tiempo aunque el ajuste programado sea el mismo, dejando el t* antiguo desincronizado.",
+      en: "(a) P₁=1 requires Ωt/2 = π/2, so t* = π/Ω. (b) Ω depends on the microwave power actually delivered to the qubit, which is affected by thermal drift, cable degradation, and amplifier fluctuations — so the real Ω changes over time even if the programmed setting is the same, leaving the old t* out of sync."
+    },
+    simple: {
+      es: "Piensa en empujar una hamaca en el momento justo para que llegue exactamente arriba, ni más ni menos. Ω es \"qué tan fuerte empujas\" y t es \"cuánto tiempo empujas\". Llegar exactamente arriba (P₁=1) significa que el qubit \"volteó\" perfectamente de apagado a encendido. El problema es que la próxima semana, la cadena de la hamaca puede estirarse un poquito (el entorno del qubit cambia con la temperatura y el desgaste), así que el mismo empujón de antes ya no llega exactamente arriba. Por eso las máquinas reales recalibran todo el tiempo, y usan IA para encontrar el empujón correcto automáticamente en vez de que una persona lo recalcule a mano cada vez.",
+      en: "Think of pushing a swing at exactly the right moment so it reaches exactly the top — no more, no less. Ω is \"how hard you push\" and t is \"how long you push.\" Reaching exactly the top (P₁=1) means the qubit \"flipped\" perfectly from off to on. The problem is that next week, the swing's chain might stretch a tiny bit (the qubit's environment shifts with temperature and wear), so the same push as before no longer lands exactly at the top. That's why real machines recalibrate constantly, and why they use AI to automatically re-find the right push instead of a person recalculating it by hand every time."
+    }
+  },
+  {
+    title: { es: "Calibración de una compuerta CNOT (resonancia cruzada)", en: "Calibrating a CNOT gate (cross-resonance)" },
+    tag: "IBM Quantum",
+    circuit: { numQubits: 2, cols: 2, wireLabels: ["q0 (control)","q1 (target)"], gates: [
+      { col: 0, qubit: 0, label: "X", type: "box" },
+      { col: 1, control: 0, target: 1, type: "cnot" },
+    ]},
+    adv: {
+      es: "Calibrar una compuerta de un qubit requiere ajustar 1 parámetro (amplitud). Calibrar un CNOT por resonancia cruzada entre dos qubits superconductores requiere ajustar amplitud Y fase del pulso simultáneamente (espacio 2D), y en un chip de N qubits, cada par acoplado necesita su propia calibración. (a) ¿Por qué una búsqueda de rejilla (grid search) sobre 2 parámetros ya es más costosa que sobre 1? (b) ¿Por qué esto empeora mal al escalar a chips de cientos de qubits?",
+      en: "Calibrating a single-qubit gate requires tuning 1 parameter (amplitude). Calibrating a CNOT via cross-resonance between two superconducting qubits requires tuning amplitude AND phase simultaneously (a 2D space), and on an N-qubit chip, every coupled pair needs its own calibration. (a) Why is a grid search over 2 parameters already more expensive than over 1? (b) Why does this get much worse scaling to chips with hundreds of qubits?"
+    },
+    advAnswer: {
+      es: "(a) Si probamos k valores por parámetro, 1 parámetro cuesta k evaluaciones pero 2 parámetros cuestan k² — el costo crece exponencialmente con el número de parámetros (la \"maldición de la dimensionalidad\"). (b) El número de pares de qubits acoplados crece aproximadamente con N (o N² si se permite conectividad completa), así que el número total de calibraciones 2D necesarias crece mucho más rápido que el número de qubits — por eso empresas como IBM usan optimización bayesiana o RL en vez de rejillas exhaustivas.",
+      en: "(a) If we try k values per parameter, 1 parameter costs k evaluations but 2 parameters cost k² — cost grows exponentially with the number of parameters (the \"curse of dimensionality\"). (b) The number of coupled qubit pairs grows roughly with N (or N² with full connectivity), so the total number of 2D calibrations needed grows far faster than the qubit count — which is why companies like IBM use Bayesian optimization or RL instead of exhaustive grids."
+    },
+    simple: {
+      es: "Antes, para afinar una nota de guitarra solo giras UNA perilla (afinación) hasta que suene bien. Ahora imagina que para hacer que dos instrumentos toquen juntos perfectamente, necesitas ajustar DOS perillas a la vez (el volumen Y el tiempo exacto en que empieza cada uno) — probar cada combinación posible de las dos toma muchísimo más tiempo que probar una sola perilla. Y en una orquesta con cientos de instrumentos, cada PAR de instrumentos que tocan juntos necesita su propio ajuste de dos perillas — por eso se necesita una IA que adivine inteligentemente qué combinaciones probar, en vez de probarlas absolutamente todas.",
+      en: "Before, tuning a guitar string means turning ONE knob until it sounds right. Now imagine getting two instruments to play together perfectly requires adjusting TWO knobs at once (volume AND the exact timing each one starts) — trying every possible combination of two knobs takes way longer than trying one knob. And in an orchestra with hundreds of instruments, every PAIR of instruments playing together needs its own two-knob adjustment — that's why you need an AI that smartly guesses which combinations to try, instead of testing literally all of them."
+    }
+  },
+  {
+    title: { es: "VQE: bucle híbrido cuántico-clásico para química", en: "VQE: hybrid quantum-classical loop for chemistry" },
+    tag: "IBM / Google · Descubrimiento de fármacos",
+    circuit: { numQubits: 2, cols: 3, wireLabels: ["q0","q1"], gates: [
+      { col: 0, qubit: 0, label: "RY(θ1)", type: "box" },
+      { col: 1, control: 0, target: 1, type: "cnot" },
+      { col: 2, qubit: 1, label: "RY(θ2)", type: "box" },
+    ]},
+    adv: {
+      es: "VQE prepara un estado de prueba |ψ(θ)⟩ en la computadora cuántica, mide la energía ⟨H⟩, y un optimizador clásico ajusta θ para minimizarla — repitiendo el ciclo. (a) ¿Por qué se usa este bucle híbrido en vez de un algoritmo cuántico puro en hardware NISQ actual? (b) ¿Qué garantiza el principio variacional sobre la energía medida en cada paso?",
+      en: "VQE prepares a trial state |ψ(θ)⟩ on the quantum computer, measures the energy ⟨H⟩, and a classical optimizer adjusts θ to minimize it — repeating the cycle. (a) Why is this hybrid loop used instead of a purely quantum algorithm on today's NISQ hardware? (b) What does the variational principle guarantee about the measured energy at every step?"
+    },
+    advAnswer: {
+      es: "(a) Los algoritmos cuánticos puros para química (como la estimación de fase completa) requieren circuitos mucho más profundos y qubits lógicos corregidos por errores, que el hardware NISQ (ruidoso, sin corrección de errores) actual no puede sostener; VQE usa circuitos cortos y deja el trabajo pesado de optimización a una computadora clásica confiable. (b) El principio variacional garantiza que la energía medida ⟨ψ(θ)|H|ψ(θ)⟩ siempre es mayor o igual a la energía real del estado fundamental — así que cualquier mejora (energía más baja) es un progreso genuino, nunca un espejismo.",
+      en: "(a) Pure quantum algorithms for chemistry (like full phase estimation) require much deeper circuits and error-corrected logical qubits, which today's NISQ (noisy, uncorrected) hardware can't sustain; VQE uses short circuits and leaves the heavy optimization work to a reliable classical computer. (b) The variational principle guarantees the measured energy ⟨ψ(θ)|H|ψ(θ)⟩ is always greater than or equal to the true ground-state energy — so any improvement (lower energy) is genuine progress, never an illusion."
+    },
+    simple: {
+      es: "Imagina que la computadora cuántica es un \"adivinador\" de la forma más estable de una molécula, y la computadora clásica es un \"entrenador\" que le dice \"más frío\" o \"más caliente\" según qué tan buena fue la adivinanza, y sugiere una mejor. Se repite este juego de frío-caliente muchas veces, cada vez más rápido gracias a la IA, hasta encontrar la forma más estable (la de menor energía) — que es justo lo que se necesita para diseñar nuevos medicamentos o baterías.",
+      en: "Imagine the quantum computer is a \"guesser\" trying to find a molecule's most stable shape, and the classical computer is a \"coach\" that says \"warmer\" or \"colder\" based on how good the guess was, and suggests a better one. This hot-and-cold game repeats many times, getting faster thanks to AI, until it finds the most stable shape (the lowest energy) — which is exactly what's needed to design new medicines or batteries."
+    }
+  },
+  {
+    title: { es: "QAOA: optimización combinatoria con capas variacionales", en: "QAOA: combinatorial optimization with variational layers" },
+    tag: "Rigetti · Logística y finanzas",
+    circuit: { numQubits: 2, cols: 3, wireLabels: ["q0","q1"], gates: [
+      { col: 0, control: 0, target: 1, type: "cnot" },
+      { col: 1, qubit: 0, label: "RZ(γ)", type: "box" },
+      { col: 2, qubit: 0, label: "RX(β)", type: "box" },
+    ]},
+    adv: {
+      es: "QAOA alterna capas de un Hamiltoniano de \"problema\" (codifica lo que se quiere optimizar, con ángulo γ) y un Hamiltoniano \"mezclador\" (ángulo β), repetido p veces. Un optimizador clásico ajusta (γ,β) para maximizar la calidad de la solución. (a) ¿Qué relación existe, en general, entre la profundidad p del circuito y la calidad de la solución obtenida? (b) ¿Por qué aumentar p indefinidamente no es gratis en hardware real?",
+      en: "QAOA alternates layers of a \"problem\" Hamiltonian (encodes what's being optimized, angle γ) and a \"mixer\" Hamiltonian (angle β), repeated p times. A classical optimizer tunes (γ,β) to maximize solution quality. (a) What relationship generally holds between circuit depth p and solution quality? (b) Why isn't increasing p indefinitely free on real hardware?"
+    },
+    advAnswer: {
+      es: "(a) En el límite teórico p→∞, QAOA puede aproximar la evolución adiabática y encontrar la solución óptima con alta probabilidad; en la práctica, mayor p generalmente permite explorar soluciones de mejor calidad. (b) Cada capa añade más compuertas, y cada compuerta real tiene una tasa de error distinta de cero — así que circuitos más profundos acumulan más ruido, y en algún punto el ruido supera el beneficio de más capas, degradando la solución en lugar de mejorarla.",
+      en: "(a) In the theoretical limit p→∞, QAOA can approximate adiabatic evolution and find the optimal solution with high probability; in practice, larger p generally allows exploring higher-quality solutions. (b) Each layer adds more gates, and every real gate has a nonzero error rate — so deeper circuits accumulate more noise, and past some point the noise outweighs the benefit of more layers, degrading the solution instead of improving it."
+    },
+    simple: {
+      es: "Es como sintonizar una radio con dos perillas (γ y β) para encontrar la señal más clara (la mejor respuesta a un problema, como \"qué rutas de entrega son más rápidas\"). Girar las perillas varias veces (más \"capas\", p) generalmente te acerca más a la señal perfecta. Pero cada vez que giras las perillas en una radio vieja y ruidosa (hardware real, imperfecto), se cuela un poquito de estática — así que girar demasiadas veces puede en realidad empeorar la señal en vez de mejorarla.",
+      en: "It's like tuning a radio with two knobs (γ and β) to find the clearest signal (the best answer to a problem, like \"which delivery routes are fastest\"). Turning the knobs multiple times (more \"layers,\" p) usually gets you closer to a perfect signal. But every time you turn the knobs on an old, noisy radio (real, imperfect hardware), a little static creeps in — so turning them too many times can actually make the signal worse instead of better."
+    }
+  },
+  {
+    title: { es: "Código de superficie con decodificador de IA", en: "Surface code with an AI decoder" },
+    tag: "Google Quantum AI",
+    circuit: { numQubits: 3, cols: 2, wireLabels: ["dato 1","ancilla","dato 2"], gates: [
+      { col: 0, control: 0, target: 1, type: "cnot" },
+      { col: 1, control: 2, target: 1, type: "cnot" },
+    ]},
+    adv: {
+      es: "En un código de superficie, qubits \"ancilla\" miden la paridad de sus vecinos sin colapsar la información lógica, produciendo un patrón de \"síndrome\" cuando hay errores. Google reportó en 2023 el uso de un decodificador basado en redes neuronales para interpretar estos síndromes. (a) ¿Por qué decodificar síndromes es naturalmente un problema de clasificación adecuado para ML? (b) ¿Qué restricción de tiempo real hace esto especialmente difícil?",
+      en: "In a surface code, \"ancilla\" qubits measure the parity of their neighbors without collapsing the logical information, producing a \"syndrome\" pattern when errors occur. Google reported in 2023 using a neural-network-based decoder to interpret these syndromes. (a) Why is syndrome decoding naturally a classification problem suited to ML? (b) What real-time constraint makes this especially hard?"
+    },
+    advAnswer: {
+      es: "(a) El síndrome es un patrón binario de \"disparos\" de ancillas, y la tarea es \"clasificar\" qué error físico (y por tanto qué corrección) produjo ese patrón — exactamente la estructura de un problema de clasificación supervisada, y los patrones de error se pueden simular para generar datos de entrenamiento abundantes. (b) La decodificación debe completarse en microsegundos, antes de que el siguiente ciclo de corrección de errores comience, o el código se queda \"atrás\" del ritmo de errores — así que el decodificador debe ser simultáneamente preciso Y extremadamente rápido, una combinación difícil para redes neuronales grandes.",
+      en: "(a) The syndrome is a binary pattern of ancilla \"firings,\" and the task is to \"classify\" which physical error (and therefore which correction) produced that pattern — exactly the structure of a supervised classification problem, and error patterns can be simulated to generate abundant training data. (b) Decoding must complete within microseconds, before the next error-correction cycle begins, or the code falls \"behind\" the error rate — so the decoder must be simultaneously accurate AND extremely fast, a difficult combination for large neural networks."
+    },
+    simple: {
+      es: "Piensa en cada qubit ancilla como un \"detector de humo\" que nota si algo anda mal cerca sin mirar directamente el dato (mirarlo directamente lo arruinaría). El decodificador es como un detective que ve cuáles detectores de humo se activaron y adivina dónde empezó el \"incendio\" (el error). Una computadora entrenada con muchísimos ejemplos puede ser un detective más rápido e inteligente que un libro de reglas fijas — pero tiene que resolver el caso en microsegundos, antes de que ocurra el siguiente incendio, lo cual es muy difícil.",
+      en: "Think of each ancilla qubit as a \"smoke detector\" that notices something's wrong nearby without directly looking at the data (looking directly would ruin it). The decoder is like a detective who sees which smoke detectors went off and guesses where the \"fire\" (the error) started. A computer trained on tons of examples can be a faster, smarter detective than a fixed rulebook — but it has to solve the case in microseconds, before the next fire happens, which is really hard."
+    }
+  },
+  {
+    title: { es: "Mapa de características cuánticas para machine learning", en: "Quantum feature map for machine learning" },
+    tag: "IBM Quantum · Finanzas / detección de fraude",
+    circuit: { numQubits: 2, cols: 3, wireLabels: ["q0 (x1)","q1 (x2)"], gates: [
+      { col: 0, qubit: 0, label: "RY(x1)", type: "box" },
+      { col: 0, qubit: 1, label: "RY(x2)", type: "box" },
+      { col: 1, control: 0, target: 1, type: "cnot" },
+      { col: 2, qubit: 1, type: "meter" },
+    ]},
+    adv: {
+      es: "Un mapa de características cuánticas codifica datos clásicos x en ángulos de rotación de un circuito, mapeándolos a un espacio de Hilbert exponencialmente grande, potencialmente útil para clasificación (kernels cuánticos). (a) ¿Qué hace que este mapeo sea teóricamente atractivo frente a kernels clásicos? (b) ¿Cuál es la advertencia honesta actual sobre la ventaja práctica de este enfoque?",
+      en: "A quantum feature map encodes classical data x into rotation angles of a circuit, mapping it to an exponentially large Hilbert space, potentially useful for classification (quantum kernels). (a) What makes this mapping theoretically attractive compared to classical kernels? (b) What is the current honest caveat about this approach's practical advantage?"
+    },
+    advAnswer: {
+      es: "(a) El espacio de Hilbert de n qubits tiene dimensión 2ⁿ, así que un circuito de pocos qubits puede en principio representar relaciones entre datos que serían computacionalmente costosas de calcular con kernels clásicos explícitos. (b) A la fecha, no hay evidencia sólida de que los kernels cuánticos superen a los mejores métodos clásicos (como XGBoost o redes profundas) en conjuntos de datos reales de interés práctico — la ventaja se ha demostrado principalmente en problemas construidos específicamente para favorecer el enfoque cuántico.",
+      en: "(a) The Hilbert space of n qubits has dimension 2ⁿ, so a circuit with few qubits can in principle represent data relationships that would be computationally expensive to calculate with explicit classical kernels. (b) To date, there's no solid evidence that quantum kernels outperform the best classical methods (like XGBoost or deep networks) on real datasets of practical interest — the advantage has mainly been demonstrated on problems specifically constructed to favor the quantum approach."
+    },
+    simple: {
+      es: "Imagina clasificar dulces por color comparándolos directamente. Codificar los datos de forma cuántica es como pasar cada dulce por un prisma especial que separa su información de color en un patrón mucho más rico y complejo — quizás eso hace más fácil distinguir grupos difíciles de separar. Pero, siendo honestos, los científicos todavía están probando si esto realmente ayuda en la práctica con datos reales, o si solo funciona mejor en ejemplos diseñados a propósito para lucir bien.",
+      en: "Imagine sorting candies by color by comparing them directly. Encoding the data quantumly is like passing each candy through a special prism that spreads its color information into a much richer, more complex pattern — maybe that makes it easier to separate hard-to-distinguish groups. But honestly, scientists are still testing whether this actually helps in practice with real data, or whether it only works better on examples specifically designed to make it look good."
+    }
+  },
+  {
+    title: { es: "Benchmarking aleatorio (RB) para medir fidelidad", en: "Randomized benchmarking (RB) for fidelity measurement" },
+    tag: "Estándar de industria · Rigetti / IBM / Google",
+    circuit: { numQubits: 1, cols: 4, wireLabels: ["q0"], gates: [
+      { col: 0, qubit: 0, label: "C₁", type: "box" },
+      { col: 1, qubit: 0, label: "C₂", type: "box" },
+      { col: 2, qubit: 0, label: "C₁⁻¹C₂⁻¹", type: "box" },
+      { col: 3, qubit: 0, type: "meter" },
+    ]},
+    adv: {
+      es: "El benchmarking aleatorio aplica secuencias aleatorias de compuertas de Clifford de longitud creciente m, seguidas de la inversa exacta de toda la secuencia, y mide la probabilidad de supervivencia. Esta probabilidad decae exponencialmente con m, y la tasa de decaimiento da la fidelidad promedio por compuerta. (a) ¿Por qué este método es robusto frente a errores de preparación de estado y medición (SPAM), a diferencia de medir la fidelidad de una sola compuerta directamente? (b) ¿Qué mide realmente el número extraído: el peor caso o el promedio?",
+      en: "Randomized benchmarking applies random sequences of Clifford gates of increasing length m, followed by the exact inverse of the whole sequence, and measures survival probability. This probability decays exponentially with m, and the decay rate gives the average per-gate fidelity. (a) Why is this method robust to state-preparation-and-measurement (SPAM) errors, unlike directly measuring a single gate's fidelity? (b) What does the extracted number actually measure: worst case or average?"
+    },
+    advAnswer: {
+      es: "(a) Los errores de SPAM aportan un factor multiplicativo constante en la probabilidad de supervivencia (afectan la amplitud de la curva, no su tasa de decaimiento), así que al ajustar el decaimiento exponencial en función de m, la tasa extraída queda separada matemáticamente de esos errores constantes. (b) RB mide la fidelidad PROMEDIO sobre el conjunto de compuertas de Clifford aplicadas, no el peor caso — una compuerta particular podría tener un error mucho mayor que el promedio reportado y RB no lo revelaría directamente.",
+      en: "(a) SPAM errors contribute a constant multiplicative factor to the survival probability (they affect the curve's amplitude, not its decay rate), so when fitting the exponential decay as a function of m, the extracted rate is mathematically separated from those constant errors. (b) RB measures the AVERAGE fidelity over the set of applied Clifford gates, not the worst case — a particular gate could have a much higher error than the reported average, and RB wouldn't directly reveal that."
+    },
+    simple: {
+      es: "Es como probar qué tan buena es una fotocopiadora haciéndole copiar una copia, y luego copiar esa copia, muchas veces seguidas, y viendo qué tan borrosa queda la imagen final — en vez de mirar una sola copia (que podría verse bien por pura suerte). Repetir muchas veces revela el error promedio verdadero. Pero ojo: esto te dice qué tan buena es la fotocopiadora \"en promedio\", no si hay un botón específico que está particularmente dañado.",
+      en: "It's like testing how good a copy machine is by having it copy a copy, then copy that copy, many times in a row, and seeing how blurry the final image gets — instead of looking at just one copy (which might look fine by pure luck). Repeating many times reveals the true average error. But note: this tells you how good the copier is \"on average,\" not whether one specific button is particularly broken."
+    }
+  },
+  {
+    title: { es: "Caracterización de crosstalk en un chip multi-qubit", en: "Crosstalk characterization on a multi-qubit chip" },
+    tag: "Google / IBM · Escalado de hardware",
+    circuit: { numQubits: 2, cols: 2, wireLabels: ["q0 (activo)","q1 (reposo)"], gates: [
+      { col: 0, qubit: 0, label: "RX(θ)", type: "box" },
+      { col: 1, qubit: 1, type: "meter" },
+    ]},
+    adv: {
+      es: "El crosstalk ocurre cuando controlar el qubit A causa una rotación no deseada en el qubit B, que debería estar en reposo. Caracterizar completamente el crosstalk en un chip de N qubits requiere en principio medir todos los pares (A,B). (a) ¿Cómo escala el número de mediciones necesarias con N en el peor caso? (b) ¿Cómo pueden técnicas de ML o compressed sensing reducir el número real de mediciones necesarias?",
+      en: "Crosstalk occurs when controlling qubit A causes an unwanted rotation on qubit B, which should be idle. Fully characterizing crosstalk on an N-qubit chip in principle requires measuring all pairs (A,B). (a) How does the number of required measurements scale with N in the worst case? (b) How can ML or compressed-sensing techniques reduce the actual number of measurements needed?"
+    },
+    advAnswer: {
+      es: "(a) En el peor caso, el número de pares crece como N(N-1)/2, es decir O(N²) — para 100 qubits eso son casi 5,000 pares posibles a caracterizar. (b) En la práctica, el crosstalk es dispersamente distribuido (la mayoría de los pares no acoplados tienen crosstalk casi nulo, solo los físicamente cercanos importan), así que técnicas de compressed sensing o modelos de ML entrenados con un subconjunto de mediciones pueden inferir el mapa completo de crosstalk sin medir literalmente cada par.",
+      en: "(a) In the worst case, the number of pairs grows as N(N-1)/2, i.e. O(N²) — for 100 qubits that's nearly 5,000 possible pairs to characterize. (b) In practice, crosstalk is sparsely distributed (most non-adjacent pairs have near-zero crosstalk; only physically nearby ones matter), so compressed-sensing techniques or ML models trained on a subset of measurements can infer the full crosstalk map without literally measuring every pair."
+    },
+    simple: {
+      es: "Es como revisar si encender la luz de la cocina hace que parpadee una lámpara en otra habitación, para CADA posible par de interruptores en una casa enorme. Revisar cada par uno por uno toma una eternidad si la casa crece. Pero en la vida real, un interruptor solo suele afectar lámparas cercanas, no las del otro lado de la casa — así que una IA puede adivinar inteligentemente qué pares vale la pena revisar, en vez de probar absolutamente todos.",
+      en: "It's like checking whether flipping the kitchen light causes a lamp in another room to flicker, for EVERY possible pair of switches in a huge house. Checking every pair one by one takes forever as the house grows. But in real life, a switch usually only affects nearby lamps, not ones across the house — so an AI can smartly guess which pairs are worth checking, instead of testing literally all of them."
+    }
+  },
+  {
+    title: { es: "RL para forma de pulso completa (más allá de amplitud)", en: "RL for full pulse shaping (beyond amplitude)" },
+    tag: "Google Quantum AI · Pulsos diseñados por IA",
+    circuit: { numQubits: 1, cols: 3, wireLabels: ["q0"], gates: [
+      { col: 0, qubit: 0, label: "π_net", type: "box" },
+      { col: 1, qubit: 0, label: "π_net", type: "box" },
+      { col: 2, qubit: 0, type: "meter" },
+    ]},
+    adv: {
+      es: "En el problema 1, se calibró un único parámetro (amplitud) usando diferencias finitas: 2 evaluaciones del Hamiltoniano por paso. Ahora se quiere optimizar la forma completa de un pulso discretizado en N segmentos de amplitud independientes. (a) ¿Cuántas evaluaciones del Hamiltoniano requeriría el mismo método de diferencias finitas por paso de optimización? (b) ¿Por qué una red de política entrenada por RL evita este costo?",
+      en: "In problem 1, a single parameter (amplitude) was calibrated using finite differences: 2 Hamiltonian evaluations per step. Now suppose we want to optimize the full shape of a pulse discretized into N independent amplitude segments. (a) How many Hamiltonian evaluations would the same finite-difference method require per optimization step? (b) Why does an RL-trained policy network avoid this cost?"
+    },
+    advAnswer: {
+      es: "(a) Diferencias finitas centradas necesitan 2 evaluaciones POR parámetro (uno hacia adelante, uno hacia atrás), así que para N segmentos se necesitan 2N evaluaciones del Hamiltoniano en cada paso de optimización — un costo que crece linealmente con N y se vuelve prohibitivo para pulsos con muchos segmentos. (b) Una red de política entrenada por RL aprende, a partir de experiencia acumulada en muchos episodios, a proponer directamente una forma de pulso completa (o ajustes a ella) sin necesitar recalcular un gradiente numérico en cada paso — desplaza el costo computacional al entrenamiento inicial, no a cada calibración individual.",
+      en: "(a) Centered finite differences need 2 evaluations PER parameter (one forward, one backward), so for N segments you need 2N Hamiltonian evaluations at every optimization step — a cost that grows linearly with N and becomes prohibitive for pulses with many segments. (b) An RL-trained policy network learns, from experience accumulated over many episodes, to directly propose a full pulse shape (or adjustments to it) without needing to recompute a numerical gradient at every step — it shifts the computational cost to upfront training, not to each individual calibration."
+    },
+    simple: {
+      es: "Antes, ajustábamos UNA perilla (el volumen) para afinar una nota perfectamente. Ahora imagina ajustar el volumen de una canción completa, momento a momento (cientos de perillas pequeñitas) — probar cada perilla una por una para ver cuál ayuda es demasiado lento. En vez de eso, se entrena una IA \"directora de orquesta\" que aprende, a partir de mucha experiencia previa, a mover muchas perillas a la vez de forma inteligente, sin tener que probar cada una por separado cada vez.",
+      en: "Before, we adjusted ONE knob (volume) to tune a single note perfectly. Now imagine adjusting an entire song's volume, moment by moment (hundreds of tiny knobs) — testing each knob one at a time to see what helps is way too slow. Instead, an AI \"conductor\" is trained that learns, from lots of prior experience, to move many knobs at once intelligently, without having to test each one separately every time."
+    }
+  },
+  {
+    title: { es: "Mitigación de errores en tiempo real (extrapolación a ruido cero)", en: "Real-time error mitigation (zero-noise extrapolation)" },
+    tag: "IBM Quantum Runtime",
+    circuit: { numQubits: 1, cols: 3, wireLabels: ["q0"], gates: [
+      { col: 0, qubit: 0, label: "U ×1", type: "box" },
+      { col: 1, qubit: 0, label: "U ×3", type: "box" },
+      { col: 2, qubit: 0, type: "meter" },
+    ]},
+    adv: {
+      es: "La extrapolación a ruido cero (ZNE) ejecuta el mismo circuito a varios niveles de ruido deliberadamente amplificado (1x, 2x, 3x, por ejemplo repitiendo compuertas), mide el resultado en cada nivel, y extrapola hacia atrás para estimar el resultado con ruido cero (inalcanzable directamente). (a) ¿Qué suposición sobre el comportamiento del ruido hace que esta extrapolación sea válida? (b) ¿Cuándo falla esta suposición en hardware real?",
+      en: "Zero-noise extrapolation (ZNE) runs the same circuit at several levels of deliberately amplified noise (1x, 2x, 3x, e.g. by folding gates), measures the result at each level, and extrapolates backward to estimate the zero-noise result (unreachable directly). (a) What assumption about noise behavior makes this extrapolation valid? (b) When does this assumption break down on real hardware?"
+    },
+    advAnswer: {
+      es: "(a) ZNE asume que el resultado medido es una función suave y predecible (a menudo aproximadamente polinomial o exponencial) del nivel de amplificación de ruido, de modo que un ajuste de curva con pocos puntos puede extrapolarse de forma confiable hacia el punto de ruido cero. (b) Esta suposición falla cuando el ruido no escala de forma simple con la amplificación — por ejemplo, si aparecen nuevos mecanismos de error a niveles altos de amplificación (como fugas fuera del subespacio computacional) que no estaban presentes al nivel base, la curva deja de ser suave y la extrapolación se vuelve poco confiable.",
+      en: "(a) ZNE assumes the measured result is a smooth, predictable function (often approximately polynomial or exponential) of the noise-amplification level, so a curve fit through a few points can be reliably extrapolated back to the zero-noise point. (b) This assumption breaks down when noise doesn't scale simply with amplification — for example, if new error mechanisms appear at high amplification levels (like leakage outside the computational subspace) that weren't present at the base level, the curve stops being smooth and the extrapolation becomes unreliable."
+    },
+    simple: {
+      es: "Imagina que quieres saber qué tan alta sería una planta sin ninguna maleza alrededor, pero no puedes quitar la maleza — así que en vez de eso, agregas MÁS maleza a propósito (1x, 2x, 3x extra) y observas cuánto más baja crece la planta cada vez. Luego trazas una línea hacia atrás para adivinar qué tan alta sería con CERO maleza. Es un truco ingenioso, pero solo funciona si el \"efecto de la maleza\" es simple y predecible — si de repente aparece un problema totalmente nuevo con demasiada maleza (como que la planta se pudra), la línea ya no sirve para adivinar nada.",
+      en: "Imagine you want to know how tall a plant would be with zero weeds around it, but you can't remove the weeds — so instead, you deliberately add MORE weeds (1x, 2x, 3x extra) and watch how much shorter the plant grows each time. Then you draw a line backward to guess how tall it'd be with ZERO weeds. It's a clever trick, but it only works if the \"weed effect\" is simple and predictable — if a totally new problem suddenly shows up with too many weeds (like the plant rotting), the line can't guess anything anymore."
+    }
+  },
+];
+
+let lang = 'es';
+
+function t(key) { return I18N[lang][key]; }
+
+function setLang(l) {
+  lang = l;
+  document.getElementById('btnEs').classList.toggle('active', l === 'es');
+  document.getElementById('btnEn').classList.toggle('active', l === 'en');
+  document.querySelectorAll('[data-i18n]').forEach(el => { el.textContent = t(el.getAttribute('data-i18n')); });
+  renderProblems();
+}
+
+function renderProblems() {
+  const container = document.getElementById('problems');
+  container.innerHTML = '';
+  PROBLEMS.forEach((p, idx) => {
+    const div = document.createElement('div');
+    div.className = 'problem';
+    div.innerHTML = `
+      <div class="pHeader">
+        <div class="pNum">${String(idx+1).padStart(2,'0')}</div>
+        <div class="pTitleBlock">
+          <div class="pTitle">${p.title[lang]}</div>
+          <span class="pTag">${p.tag}</span>
+        </div>
+      </div>
+      <div class="circuitBox" id="circuit-${idx}"></div>
+      <div class="toggleRow">
+        <button class="revealBtn advToggle" data-idx="${idx}">${t('advBtn')}</button>
+        <button class="revealBtn simpleToggle" data-idx="${idx}">${t('simpleBtn')}</button>
+      </div>
+      <div class="panelContent advanced" id="adv-${idx}">
+        <span class="panelLabel">${t('advLabel')}</span>
+        <p class="qText">${p.adv[lang]}</p>
+        <p>${p.advAnswer[lang]}</p>
+      </div>
+      <div class="panelContent simple" id="simple-${idx}">
+        <span class="panelLabel">${t('simpleLabel')}</span>
+        <p>${p.simple[lang]}</p>
+      </div>
+    `;
+    container.appendChild(div);
+    const svg = buildCircuitSVG(document, p.circuit);
+    document.getElementById(`circuit-${idx}`).appendChild(svg);
+  });
+
+  document.querySelectorAll('.advToggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = btn.getAttribute('data-idx');
+      const panel = document.getElementById(`adv-${i}`);
+      panel.classList.toggle('show');
+      btn.classList.toggle('active');
+    });
+  });
+  document.querySelectorAll('.simpleToggle').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const i = btn.getAttribute('data-idx');
+      const panel = document.getElementById(`simple-${i}`);
+      panel.classList.toggle('show');
+      btn.classList.toggle('active');
+    });
+  });
+}
+
+document.getElementById('btnEs').addEventListener('click', () => setLang('es'));
+document.getElementById('btnEn').addEventListener('click', () => setLang('en'));
+setLang('es');
+</script>
+</body>
+</html>
